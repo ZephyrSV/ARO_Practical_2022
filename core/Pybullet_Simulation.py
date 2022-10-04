@@ -11,7 +11,7 @@ import yaml
 from Pybullet_Simulation_base import Simulation_base
 
 # TODO: Rename class name after copying this file
-class Simulation_template(Simulation_base):
+class Simulation(Simulation_base):
     """A Bullet simulation involving Nextage robot"""
 
     def __init__(self, pybulletConfigs, robotConfigs, refVect=None):
@@ -31,44 +31,44 @@ class Simulation_template(Simulation_base):
         'base_to_dummy': np.zeros(3),  # Virtual joint
         'base_to_waist': np.zeros(3),  # Fixed joint
         # TODO: modify from here
-        'CHEST_JOINT0': np.array([0, 0, 0]),
-        'HEAD_JOINT0': np.array([0, 0, 0]),
-        'HEAD_JOINT1': np.array([0, 0, 0]),
-        'LARM_JOINT0': np.array([0, 0, 0]),
-        'LARM_JOINT1': np.array([0, 0, 0]),
-        'LARM_JOINT2': np.array([0, 0, 0]),
-        'LARM_JOINT3': np.array([0, 0, 0]),
-        'LARM_JOINT4': np.array([0, 0, 0]),
-        'LARM_JOINT5': np.array([0, 0, 0]),
-        'RARM_JOINT0': np.array([0, 0, 0]),
-        'RARM_JOINT1': np.array([0, 0, 0]),
-        'RARM_JOINT2': np.array([0, 0, 0]),
-        'RARM_JOINT3': np.array([0, 0, 0]),
-        'RARM_JOINT4': np.array([0, 0, 0]),
-        'RARM_JOINT5': np.array([0, 0, 0]),
+        'CHEST_JOINT0': np.array([0, 0, 1]),
+        'HEAD_JOINT0': np.array([0, 0, 1]),
+        'HEAD_JOINT1': np.array([0, 1, 0]),
+        'LARM_JOINT0': np.array([0, 0, 1]),
+        'LARM_JOINT1': np.array([0, 1, 0]),
+        'LARM_JOINT2': np.array([0, 1, 0]),
+        'LARM_JOINT3': np.array([1, 0, 0]),
+        'LARM_JOINT4': np.array([0, 1, 0]),
+        'LARM_JOINT5': np.array([0, 0, 1]),
+        'RARM_JOINT0': np.array([0, 0, 1]),
+        'RARM_JOINT1': np.array([0, 1, 0]),
+        'RARM_JOINT2': np.array([0, 1, 0]),
+        'RARM_JOINT3': np.array([1, 0, 0]),
+        'RARM_JOINT4': np.array([0, 1, 0]),
+        'RARM_JOINT5': np.array([0, 0, 1]),
         'RHAND'      : np.array([0, 0, 0]),
         'LHAND'      : np.array([0, 0, 0])
     }
 
     frameTranslationFromParent = {
         'base_to_dummy': np.zeros(3),  # Virtual joint
-        'base_to_waist': np.zeros(3),  # Fixed joint
+        'base_to_waist': np.array([0, 0, 0.85]),
         # TODO: modify from here
-        'CHEST_JOINT0': np.array([0, 0, 0]),
-        'HEAD_JOINT0': np.array([0, 0, 0]),
-        'HEAD_JOINT1': np.array([0, 0, 0]),
-        'LARM_JOINT0': np.array([0, 0, 0]),
-        'LARM_JOINT1': np.array([0, 0, 0]),
-        'LARM_JOINT2': np.array([0, 0, 0]),
-        'LARM_JOINT3': np.array([0, 0, 0]),
-        'LARM_JOINT4': np.array([0, 0, 0]),
-        'LARM_JOINT5': np.array([0, 0, 0]),
-        'RARM_JOINT0': np.array([0, 0, 0]),
-        'RARM_JOINT1': np.array([0, 0, 0]),
-        'RARM_JOINT2': np.array([0, 0, 0]),
-        'RARM_JOINT3': np.array([0, 0, 0]),
-        'RARM_JOINT4': np.array([0, 0, 0]),
-        'RARM_JOINT5': np.array([0, 0, 0]),
+        'CHEST_JOINT0': np.array([0, 0, 0.267]),
+        'HEAD_JOINT0': np.array([0, 0, 0.302]),
+        'HEAD_JOINT1': np.array([0, 0, 0.066]),
+        'LARM_JOINT0': np.array([0.04, 0.135, 0.1015]),
+        'LARM_JOINT1': np.array([0, 0, 0.066]),
+        'LARM_JOINT2': np.array([0, 0.095, -0.24]),
+        'LARM_JOINT3': np.array([0.1805, 0, -0.03]),
+        'LARM_JOINT4': np.array([0.1495, 0, 0]),
+        'LARM_JOINT5': np.array([0, 0, -0.1335]),
+        'RARM_JOINT0': np.array([0.04, -0.135, 0.1015]),
+        'RARM_JOINT1': np.array([0, 0, 0.066]),
+        'RARM_JOINT2': np.array([0, -0.095, -0.25]),
+        'RARM_JOINT3': np.array([0.1805, 0, -0.03]),
+        'RARM_JOINT4': np.array([0.1495, 0, 0]),
+        'RARM_JOINT5': np.array([0, 0, -0.1335]),
         'RHAND'      : np.array([0, 0, 0]), # optional
         'LHAND'      : np.array([0, 0, 0]) # optional
     }
