@@ -96,6 +96,30 @@ class Simulation(Simulation_base):
         'LHAND': [] # optional
     }
 
+    transformationOrderJointReversed = {
+        'base_to_dummy': [], # Virtual joint
+        'base_to_waist': [], # Fixed joint
+        'CHEST_JOINT0': ['base_to_waist'],
+        'HEAD_JOINT0': ['base_to_waist', 'CHEST_JOINT0'],
+        'HEAD_JOINT1': ['base_to_waist', 'CHEST_JOINT0', 'HEAD_JOINT0'],
+        'LARM_JOINT0': ['base_to_waist', 'CHEST_JOINT0'],
+        'LARM_JOINT1': ['base_to_waist', 'CHEST_JOINT0', 'LARM_JOINT0'],
+        'LARM_JOINT2': ['base_to_waist', 'CHEST_JOINT0', 'LARM_JOINT0', 'LARM_JOINT1'],
+        'LARM_JOINT3': ['base_to_waist', 'CHEST_JOINT0', 'LARM_JOINT0', 'LARM_JOINT1', 'LARM_JOINT2'],
+        'LARM_JOINT4': ['base_to_waist', 'CHEST_JOINT0', 'LARM_JOINT0', 'LARM_JOINT1', 'LARM_JOINT2', 'LARM_JOINT3'],
+        'LARM_JOINT5': ['base_to_waist', 'CHEST_JOINT0', 'LARM_JOINT0', 'LARM_JOINT1', 'LARM_JOINT2', 'LARM_JOINT3', 'LARM_JOINT4'],
+        'RARM_JOINT0': ['base_to_waist', 'CHEST_JOINT0'],
+        'RARM_JOINT1': ['base_to_waist', 'CHEST_JOINT0', 'RARM_JOINT0'],
+        'RARM_JOINT2': ['base_to_waist', 'CHEST_JOINT0', 'RARM_JOINT0', 'RARM_JOINT1'],
+        'RARM_JOINT3': ['base_to_waist', 'CHEST_JOINT0', 'RARM_JOINT0', 'RARM_JOINT1', 'RARM_JOINT2'],
+        'RARM_JOINT4': ['base_to_waist', 'CHEST_JOINT0', 'RARM_JOINT0', 'RARM_JOINT1', 'RARM_JOINT2', 'RARM_JOINT3'],
+        'RARM_JOINT5': ['base_to_waist', 'CHEST_JOINT0', 'RARM_JOINT0', 'RARM_JOINT1', 'RARM_JOINT2', 'RARM_JOINT3', 'RARM_JOINT4'],
+        'RHAND': [],  # optional
+        'LHAND': [] # optional
+    }
+
+
+
 
 
 
@@ -182,7 +206,12 @@ class Simulation(Simulation_base):
 
     def jacobianMatrix(self, endEffector):
         """Calculate the Jacobian Matrix for the Nextage Robot."""
-        # TODO modify from here
+        jacobian = np.cross(self.getJointAxis(endEffector), self.getJointPosition(endEffector))
+        jacobian.reshape(1,3)
+        for joint in self.transformationOrderJointReversed[endEffector][1:]:
+            jacobian.append(np.cross(self.getJointAxis(joint), self.getJointPosition(endEffector) - self.getJointPosition(joint)))
+        return jacobian.T
+
         # You can implement the cross product yourself or use calculateJacobian().
         # Hint: you should return a numpy array for your Jacobian matrix. The
         # size of the matrix will depend on your chosen convention. You can have
