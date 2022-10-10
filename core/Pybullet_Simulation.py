@@ -10,8 +10,9 @@ import yaml
 
 from Pybullet_Simulation_base import Simulation_base
 
+
 # TODO: Rename class name after copying this file
-class Simulation(Simulation_base):
+class Simulation_template(Simulation_base):
     """A Bullet simulation involving Nextage robot"""
 
     def __init__(self, pybulletConfigs, robotConfigs, refVect=None):
@@ -23,13 +24,13 @@ class Simulation(Simulation_base):
         if refVect:
             self.refVector = np.array(refVect)
         else:
-            self.refVector = np.array([1,0,0])
+            self.refVector = np.array([1, 0, 0])
 
     ########## Task 1: Kinematics ##########
     # Task 1.1 Forward Kinematics
     jointRotationAxis = {
         'base_to_dummy': np.zeros(3),  # Virtual joint
-        'base_to_waist': np.zeros(3),  # Fixed joint
+        'base_to_waist': np.array([0, 0, 1]),  # Fixed joint   ######!!!!
         # TODO: modify from here
         'CHEST_JOINT0': np.array([0, 0, 1]),
         'HEAD_JOINT0': np.array([0, 0, 1]),
@@ -46,20 +47,20 @@ class Simulation(Simulation_base):
         'RARM_JOINT3': np.array([1, 0, 0]),
         'RARM_JOINT4': np.array([0, 1, 0]),
         'RARM_JOINT5': np.array([0, 0, 1]),
-        'RHAND'      : np.array([0, 0, 0]),
-        'LHAND'      : np.array([0, 0, 0])
+        'RHAND': np.array([0, 0, 0]),
+        'LHAND': np.array([0, 0, 0])
     }
 
     frameTranslationFromParent = {
         'base_to_dummy': np.zeros(3),  # Virtual joint
-        'base_to_waist': np.array([0, 0, 0.85]),
+        'base_to_waist': np.array([0, 0, 0.85]),  # Fixed joint
         # TODO: modify from here
         'CHEST_JOINT0': np.array([0, 0, 0.267]),
         'HEAD_JOINT0': np.array([0, 0, 0.302]),
         'HEAD_JOINT1': np.array([0, 0, 0.066]),
         'LARM_JOINT0': np.array([0.04, 0.135, 0.1015]),
         'LARM_JOINT1': np.array([0, 0, 0.066]),
-        'LARM_JOINT2': np.array([0, 0.095, -0.24]),
+        'LARM_JOINT2': np.array([0, 0.095, -0.25]),
         'LARM_JOINT3': np.array([0.1805, 0, -0.03]),
         'LARM_JOINT4': np.array([0.1495, 0, 0]),
         'LARM_JOINT5': np.array([0, 0, -0.1335]),
@@ -69,8 +70,8 @@ class Simulation(Simulation_base):
         'RARM_JOINT3': np.array([0.1805, 0, -0.03]),
         'RARM_JOINT4': np.array([0.1495, 0, 0]),
         'RARM_JOINT5': np.array([0, 0, -0.1335]),
-        'RHAND'      : np.array([0, 0, 0]), # optional
-        'LHAND'      : np.array([0, 0, 0]) # optional
+        'RHAND': np.array([0, 0, 0]),  # optional
+        'LHAND': np.array([0, 0, 0])  # optional
     }
 
     def getJointRotationalMatrix(self, jointName=None, theta=None):
@@ -83,8 +84,27 @@ class Simulation(Simulation_base):
                 Must provide a joint in order to compute the rotational matrix!")
         # TODO modify from here
         # Hint: the output should be a 3x3 rotational matrix as a numpy array
-        #return np.matrix()
-        pass
+        # return np.matrix()
+        joint_rot_axis = self.jointRotationAxis(jointName)
+        joint_x = joint_rot_axis[0]
+        joint_y = joint_rot_axis[1]
+        joint_z = joint_rot_axis[2]
+        if joint_x == 1:
+            rotation_matrix = np.matrix([[1, 0, 0],
+                                         [0, np.cos(theta), -np.sin(theta)],
+                                         [0, np.sin(theta), np.cos(theta)]])
+        elif joint_y == 1:
+            rotation_matrix = np.matrix([[np.cos(theta), 0, np.sin(theta)],
+                                         [0, 1, 0],
+                                         [-np.sin(theta), 0, np.cos(theta)]])
+        elif joint_z == 1:
+            rotation_matrix = np.matrix([[np.cos(theta), -np.sin(theta), 0],
+                                         [np.sin(theta), np.cos(theta), 0]
+                                         [0, 0, 1]])
+        else:
+            rotation_matrix = np.zeros(9).reshape(3, 3)
+
+        return rotation_matrix
 
     def getTransformationMatrices(self):
         """
@@ -94,7 +114,8 @@ class Simulation(Simulation_base):
         # TODO modify from here
         # Hint: the output should be a dictionary with joint names as keys and
         # their corresponding homogeneous transformation matrices as values.
-        return transformationMatrices
+        for self.joint
+            return transformationMatrices
 
     def getJointLocationAndOrientation(self, jointName):
         """
@@ -102,10 +123,10 @@ class Simulation(Simulation_base):
             according to the topology of the Nextage robot.
         """
         # Remember to multiply the transformation matrices following the kinematic chain for each arm.
-        #TODO modify from here
+        # TODO modify from here
         # Hint: return two numpy arrays, a 3x1 array for the position vector,
         # and a 3x3 array for the rotation matrix
-        #return pos, rotmat
+        # return pos, rotmat
         pass
 
     def getJointPosition(self, jointName):
@@ -131,12 +152,13 @@ class Simulation(Simulation_base):
         # size of the matrix will depend on your chosen convention. You can have
         # a 3xn or a 6xn Jacobian matrix, where 'n' is the number of joints in
         # your kinematic chain.
-        #return np.array()
+        # return np.array()
         pass
 
     # Task 1.2 Inverse Kinematics
 
-    def inverseKinematics(self, endEffector, targetPosition, orientation, interpolationSteps, maxIterPerStep, threshold):
+    def inverseKinematics(self, endEffector, targetPosition, orientation, interpolationSteps, maxIterPerStep,
+                          threshold):
         """Your IK solver \\
         Arguments: \\
             endEffector: the jointName the end-effector \\
@@ -155,29 +177,28 @@ class Simulation(Simulation_base):
         pass
 
     def move_without_PD(self, endEffector, targetPosition, speed=0.01, orientation=None,
-        threshold=1e-3, maxIter=3000, debug=False, verbose=False):
+                        threshold=1e-3, maxIter=3000, debug=False, verbose=False):
         """
         Move joints using Inverse Kinematics solver (without using PD control).
         This method should update joint states directly.
         Return:
             pltTime, pltDistance arrays used for plotting
         """
-        #TODO add your code here
+        # TODO add your code here
         # iterate through joints and update joint states based on IK solver
 
-        #return pltTime, pltDistance
+        # return pltTime, pltDistance
         pass
 
     def tick_without_PD(self):
         """Ticks one step of simulation without PD control. """
         # TODO modify from here
         # Iterate through all joints and update joint states.
-            # For each joint, you can use the shared variable self.jointTargetPos.
+        # For each joint, you can use the shared variable self.jointTargetPos.
 
         self.p.stepSimulation()
         self.drawDebugLines()
         time.sleep(self.dt)
-
 
     ########## Task 2: Dynamics ##########
     # Task 2.1 PD Controller
@@ -206,6 +227,7 @@ class Simulation(Simulation_base):
             targetPos - target joint position \\
             targetVel - target joint velocity
         """
+
         def toy_tick(x_ref, x_real, dx_ref, dx_real, integral):
             # loads your PID gains
             jointController = self.jointControllers[joint]
@@ -241,14 +263,14 @@ class Simulation(Simulation_base):
         return pltTime, pltTarget, pltTorque, pltTorqueTime, pltPosition, pltVelocity
 
     def move_with_PD(self, endEffector, targetPosition, speed=0.01, orientation=None,
-        threshold=1e-3, maxIter=3000, debug=False, verbose=False):
+                     threshold=1e-3, maxIter=3000, debug=False, verbose=False):
         """
         Move joints using inverse kinematics solver and using PD control.
         This method should update joint states using the torque output from the PD controller.
         Return:
             pltTime, pltDistance arrays used for plotting
         """
-        #TODO add your code here
+        # TODO add your code here
         # Iterate through joints and use states from IK solver as reference states in PD controller.
         # Perform iterations to track reference states using PD controller until reaching
         # max iterations or position threshold.
@@ -257,7 +279,7 @@ class Simulation(Simulation_base):
         # controller to converge to the final target position after performing
         # all IK iterations (optional).
 
-        #return pltTime, pltDistance
+        # return pltTime, pltDistance
         pass
 
     def tick(self):
@@ -313,17 +335,17 @@ class Simulation(Simulation_base):
         cubic spline defined by the control points,
         sampled nTimes along the curve.
         """
-        #TODO add your code here
+        # TODO add your code here
         # Return 'nTimes' points per dimension in 'points' (typically a 2xN array),
         # sampled from a cubic spline defined by 'points' and a boundary condition.
         # You may use methods found in scipy.interpolate
 
-        #return xpoints, ypoints
+        # return xpoints, ypoints
         pass
 
     # Task 3.1 Pushing
     def dockingToPosition(self, leftTargetAngle, rightTargetAngle, angularSpeed=0.005,
-            threshold=1e-1, maxIter=300, verbose=False):
+                          threshold=1e-1, maxIter=300, verbose=False):
         """A template function for you, you are free to use anything else"""
         # TODO: Append your code here
         pass
@@ -334,4 +356,4 @@ class Simulation(Simulation_base):
         # TODO: Append your code here
         pass
 
- ### END
+### END
