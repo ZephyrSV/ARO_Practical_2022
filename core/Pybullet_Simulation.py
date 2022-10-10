@@ -74,6 +74,31 @@ class Simulation(Simulation_base):
         'LHAND': np.array([0, 0, 0])  # optional
     }
 
+    transformationOrderJoint = {
+        'base_to_dummy': [], # Virtual joint
+        'base_to_waist': [], # Fixed joint
+        'CHEST_JOINT0': ['base_to_waist'],
+        'HEAD_JOINT0': ['CHEST_JOINT0', 'base_to_waist'],
+        'HEAD_JOINT1': ['HEAD_JOINT0', 'CHEST_JOINT0', 'base_to_waist'],
+        'LARM_JOINT0': ['CHEST_JOINT0', 'base_to_waist'],
+        'LARM_JOINT1': ['LARM_JOINT0', 'CHEST_JOINT0', 'base_to_waist'],
+        'LARM_JOINT2': ['LARM_JOINT1', 'LARM_JOINT0', 'CHEST_JOINT0', 'base_to_waist'],
+        'LARM_JOINT3': ['LARM_JOINT2', 'LARM_JOINT1', 'LARM_JOINT0', 'CHEST_JOINT0', 'base_to_waist'],
+        'LARM_JOINT4': ['LARM_JOINT3', 'LARM_JOINT2', 'LARM_JOINT1', 'LARM_JOINT0', 'CHEST_JOINT0', 'base_to_waist'],
+        'LARM_JOINT5': ['LARM_JOINT4', 'LARM_JOINT3', 'LARM_JOINT2', 'LARM_JOINT1', 'LARM_JOINT0', 'CHEST_JOINT0', 'base_to_waist'],
+        'RARM_JOINT0': ['CHEST_JOINT0', 'base_to_waist'],
+        'RARM_JOINT1': ['RARM_JOINT0', 'CHEST_JOINT0', 'base_to_waist'],
+        'RARM_JOINT2': ['RARM_JOINT1', 'RARM_JOINT0', 'CHEST_JOINT0', 'base_to_waist'],
+        'RARM_JOINT3': ['RARM_JOINT2', 'RARM_JOINT1', 'RARM_JOINT0', 'CHEST_JOINT0', 'base_to_waist'],
+        'RARM_JOINT4': ['RARM_JOINT3', 'RARM_JOINT2', 'RARM_JOINT1', 'RARM_JOINT0', 'CHEST_JOINT0', 'base_to_waist'],
+        'RARM_JOINT5': ['RARM_JOINT4', 'RARM_JOINT3', 'RARM_JOINT2', 'RARM_JOINT1', 'RARM_JOINT0', 'CHEST_JOINT0', 'base_to_waist'],
+        'RHAND': [],  # optional
+        'LHAND': [] # optional
+    }
+
+
+
+
     def getJointRotationalMatrix(self, jointName=None, theta=None):
         """
             Returns the 3x3 rotation matrix for a joint from the axis-angle representation,
@@ -82,7 +107,6 @@ class Simulation(Simulation_base):
         if jointName == None:
             raise Exception("[getJointRotationalMatrix] \
                 Must provide a joint in order to compute the rotational matrix!")
-        # TODO modify from here
         # Hint: the output should be a 3x3 rotational matrix as a numpy array
         # return np.matrix()
         joint_rot_axis = self.jointRotationAxis.get(jointName)
@@ -111,7 +135,6 @@ class Simulation(Simulation_base):
             Returns the homogeneous transformation matrices for each joint as a dictionary of matrices.
         """
         transformationMatrices = {}
-        # TODO modify from here
         # Hint: the output should be a dictionary with joint names as keys and
         # their corresponding homogeneous transformation matrices as values.
         for joint_name in self.jointRotationAxis.keys():
@@ -131,7 +154,12 @@ class Simulation(Simulation_base):
             according to the topology of the Nextage robot.
         """
         # Remember to multiply the transformation matrices following the kinematic chain for each arm.
-        # TODO modify from here
+        homogeneousTransformationMatrices = self.getTransformationMatrices()
+        transformationOrder = self.transformationOrderJoint.get(jointName)
+        JointToWorldFrame = homogeneousTransformationMatrices.get(jointName)
+        for next_joint in transformationOrder:
+            JointToWorldFrame = homogeneousTransformationMatrices.get(next_joint) * JointToWorldFrame
+        return JointToWorldFrame[0:2, 3], JointToWorldFrame[0:2, 0:2]
         # Hint: return two numpy arrays, a 3x1 array for the position vector,
         # and a 3x3 array for the rotation matrix
         # return pos, rotmat
