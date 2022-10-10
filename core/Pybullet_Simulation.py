@@ -12,7 +12,7 @@ from Pybullet_Simulation_base import Simulation_base
 
 
 # TODO: Rename class name after copying this file
-class Simulation_template(Simulation_base):
+class Simulation(Simulation_base):
     """A Bullet simulation involving Nextage robot"""
 
     def __init__(self, pybulletConfigs, robotConfigs, refVect=None):
@@ -85,7 +85,7 @@ class Simulation_template(Simulation_base):
         # TODO modify from here
         # Hint: the output should be a 3x3 rotational matrix as a numpy array
         # return np.matrix()
-        joint_rot_axis = self.jointRotationAxis(jointName)
+        joint_rot_axis = self.jointRotationAxis.get(jointName)
         joint_x = joint_rot_axis[0]
         joint_y = joint_rot_axis[1]
         joint_z = joint_rot_axis[2]
@@ -114,17 +114,9 @@ class Simulation_template(Simulation_base):
         # TODO modify from here
         # Hint: the output should be a dictionary with joint names as keys and
         # their corresponding homogeneous transformation matrices as values.
+        for joint_name in self.jointRotationAxis:
 
-        for joint_name in self.jointRotationAxis.keys():
-            angle = self.getJointPos(joint_name)
-            #Rotation
-            result = self.getJointRotationalMatrix(jointName=joint_name, theta=angle)
-            #Translation
-            result.c_(self.frameTranslationFromParent.get(joint_name))
-            #homogenous
-            result.append(np.array([0, 0, 0, 1]))
-            transformationMatrices[joint_name] = result
-
+            transformationMatrices
         return transformationMatrices
 
     def getJointLocationAndOrientation(self, jointName):
