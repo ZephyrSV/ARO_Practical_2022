@@ -236,7 +236,25 @@ class Simulation(Simulation_base):
         Return: \\
             Vector of x_refs
         """
-        # TODO add your code here
+        curr_pos = self.getJointPosition(endEffector)
+        targets = np.linspace(curr_pos, targetPosition, interpolationSteps)
+        x_refs = []
+        for target in targets:
+            for i in range(maxIterPerStep):
+                # Calculate Jacobian
+                jacobian = self.jacobianMatrix(endEffector)
+                # Calculate dy
+                dy = curr_pos - self.getJointPosition(endEffector)
+                # Calculate delta
+                drad = np.linalg.pinv(jacobian) @ dy
+                # Update joint angles
+                for i, joint in enumerate(self.transformationOrderJointReversed[endEffector]):
+                    self.getJointPos(joint) - drad[i]
+                    self.p.resetJointState(self.robot, self.jointIds[joint], self.getJointPos(joint) - drad[i])
+                curr_pos = self.getJointPosition(endEffector)
+                if (np.norm(curr_pos - target) < threshold):
+                    #x_refs =
+                    break
         # Hint: return a numpy array which includes the reference angular
         # positions for all joints after performing inverse kinematics.
         pass
