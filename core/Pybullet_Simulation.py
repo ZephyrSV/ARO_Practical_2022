@@ -114,9 +114,15 @@ class Simulation(Simulation_base):
         # TODO modify from here
         # Hint: the output should be a dictionary with joint names as keys and
         # their corresponding homogeneous transformation matrices as values.
-        for joint_name in self.jointRotationAxis:
-
-            transformationMatrices
+        for joint_name in self.jointRotationAxis.keys():
+            angle = self.getJointPos(joint_name)
+            # Rotation
+            result = self.getJointRotationalMatrix(jointName=joint_name, theta=angle)
+            # Translation
+            result.c_(self.frameTranslationFromParent.get(joint_name))
+            # homogenous
+            result.append(np.array([0, 0, 0, 1]))
+            transformationMatrices[joint_name] = result
         return transformationMatrices
 
     def getJointLocationAndOrientation(self, jointName):
