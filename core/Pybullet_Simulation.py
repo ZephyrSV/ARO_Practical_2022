@@ -102,6 +102,7 @@ class Simulation(Simulation_base):
         'LARM_JOINT3': ['base_to_waist', 'CHEST_JOINT0', 'LARM_JOINT0', 'LARM_JOINT1', 'LARM_JOINT2'],
         'LARM_JOINT4': ['base_to_waist', 'CHEST_JOINT0', 'LARM_JOINT0', 'LARM_JOINT1', 'LARM_JOINT2', 'LARM_JOINT3'],
         'LARM_JOINT5': ['base_to_waist', 'CHEST_JOINT0', 'LARM_JOINT0', 'LARM_JOINT1', 'LARM_JOINT2', 'LARM_JOINT3', 'LARM_JOINT4'],
+        #'LARM_JOINT5': ['LARM_JOINT0', 'LARM_JOINT1', 'LARM_JOINT2', 'LARM_JOINT3', 'LARM_JOINT4'],
         'RARM_JOINT0': ['base_to_waist', 'CHEST_JOINT0'],
         'RARM_JOINT1': ['base_to_waist', 'CHEST_JOINT0', 'RARM_JOINT0'],
         'RARM_JOINT2': ['base_to_waist', 'CHEST_JOINT0', 'RARM_JOINT0', 'RARM_JOINT1'],
@@ -205,7 +206,7 @@ class Simulation(Simulation_base):
             # position
             temp = np.cross(self.getJointAxis(joint), self.getJointPosition(endEffector) - self.getJointPosition(joint))
             # orientation
-            # temp = np.c_[temp, np.cross(self.getJointAxis(joint), self.getJointAxis(endEffector))]
+            # temp = temp + np.cross(self.getJointAxis(joint), self.getJointAxis(endEffector))]
             jacobian = np.append(jacobian, temp, axis=0)
         return jacobian.T
 
@@ -234,9 +235,6 @@ class Simulation(Simulation_base):
             Vector of x_refs
         """
         curr_pos = self.getJointPosition(endEffector)
-        print(curr_pos)
-        print(curr_pos.shape)
-        print(targetPosition)
         targets = np.linspace(curr_pos, targetPosition, interpolationSteps)
         x_refs = np.array([])
         for target in targets:
@@ -254,10 +252,12 @@ class Simulation(Simulation_base):
                 if np.linalg.norm(curr_pos - target) < threshold:
                     temp = {}
                     temp[endEffector] = self.getJointPosition(endEffector)
+                    print(f"JOINT NAME {endEffector}")
+                    print(f"JOINT POS {self.getJointPosition(endEffector)}")
                     for joint in self.transformationOrderJointReversed[endEffector]:
                         temp[joint] = self.getJointPosition(joint)
-                        print(f"JOINT POS {self.getJointPosition(joint)}")
                         print(f"JOINT NAME {joint}")
+                        print(f"JOINT POS {self.getJointPosition(joint)}")
                     x_refs = np.append(x_refs, temp)
                     break
         return x_refs
@@ -275,7 +275,7 @@ class Simulation(Simulation_base):
         """
         # TODO add your code here
         # iterate through joints and update joint states based on IK solver
-        result = self.inverseKinematics(endEffector, targetPosition, orientation, 10, maxIter, threshold)
+        result = self.inverseKinematics(endEffector, targetPosition, orientation, 50, maxIter, threshold)
         pltTime = np.arange(0, speed * len(result), speed)
         print(type(result[0]))
         funct = lambda x: np.linalg.norm(targetPosition - x.get(endEffector))
