@@ -253,8 +253,11 @@ class Simulation(Simulation_base):
                 curr_pos = self.getJointPosition(endEffector)
                 if np.linalg.norm(curr_pos - target) < threshold:
                     temp = {}
+                    temp[endEffector] = self.getJointPosition(endEffector)
                     for joint in self.transformationOrderJointReversed[endEffector]:
-                        temp[joint] = self.getJointPos(joint)
+                        temp[joint] = self.getJointPosition(joint)
+                        print(f"JOINT POS {self.getJointPosition(joint)}")
+                        print(f"JOINT NAME {joint}")
                     x_refs = np.append(x_refs, temp)
                     break
         return x_refs
@@ -275,8 +278,7 @@ class Simulation(Simulation_base):
         result = self.inverseKinematics(endEffector, targetPosition, orientation, 10, maxIter, threshold)
         pltTime = np.arange(0, speed * len(result), speed)
         print(type(result[0]))
-        funct = lambda x: x.get(endEffector)
-        #funct = lambda x: np.linalg.norm(targetPosition - x.get(endEffector))
+        funct = lambda x: np.linalg.norm(targetPosition - x.get(endEffector))
         pltDistance = np.array(list(map(funct, result)))
         return pltTime, pltDistance
         pass
