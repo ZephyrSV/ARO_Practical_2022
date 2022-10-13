@@ -46,9 +46,7 @@ class Simulation(Simulation_base):
         'RARM_JOINT2': np.array([0, 1, 0]),
         'RARM_JOINT3': np.array([1, 0, 0]),
         'RARM_JOINT4': np.array([0, 1, 0]),
-        'RARM_JOINT5': np.array([0, 0, 1]),
-        'RHAND': np.array([0, 0, 0]),
-        'LHAND': np.array([0, 0, 0])
+        'RARM_JOINT5': np.array([0, 0, 1])
     }
 
     frameTranslationFromParent = {
@@ -69,9 +67,7 @@ class Simulation(Simulation_base):
         'RARM_JOINT2': np.array([0, -0.095, -0.25]),
         'RARM_JOINT3': np.array([0.1805, 0, -0.03]),
         'RARM_JOINT4': np.array([0.1495, 0, 0]),
-        'RARM_JOINT5': np.array([0, 0, -0.1335]),
-        'RHAND': np.array([0, 0, 0]),  # optional
-        'LHAND': np.array([0, 0, 0])  # optional
+        'RARM_JOINT5': np.array([0, 0, -0.1335])
     }
 
     transformationOrderJoint = {
@@ -91,9 +87,7 @@ class Simulation(Simulation_base):
         'RARM_JOINT2': ['RARM_JOINT1', 'RARM_JOINT0', 'CHEST_JOINT0', 'base_to_waist'],
         'RARM_JOINT3': ['RARM_JOINT2', 'RARM_JOINT1', 'RARM_JOINT0', 'CHEST_JOINT0', 'base_to_waist'],
         'RARM_JOINT4': ['RARM_JOINT3', 'RARM_JOINT2', 'RARM_JOINT1', 'RARM_JOINT0', 'CHEST_JOINT0', 'base_to_waist'],
-        'RARM_JOINT5': ['RARM_JOINT4', 'RARM_JOINT3', 'RARM_JOINT2', 'RARM_JOINT1', 'RARM_JOINT0', 'CHEST_JOINT0', 'base_to_waist'],
-        'RHAND': [],  # optional
-        'LHAND': []  # optional
+        'RARM_JOINT5': ['RARM_JOINT4', 'RARM_JOINT3', 'RARM_JOINT2', 'RARM_JOINT1', 'RARM_JOINT0', 'CHEST_JOINT0', 'base_to_waist']
     }
 
     transformationOrderJointReversed = {
@@ -113,9 +107,7 @@ class Simulation(Simulation_base):
         'RARM_JOINT2': ['base_to_waist', 'CHEST_JOINT0', 'RARM_JOINT0', 'RARM_JOINT1'],
         'RARM_JOINT3': ['base_to_waist', 'CHEST_JOINT0', 'RARM_JOINT0', 'RARM_JOINT1', 'RARM_JOINT2'],
         'RARM_JOINT4': ['base_to_waist', 'CHEST_JOINT0', 'RARM_JOINT0', 'RARM_JOINT1', 'RARM_JOINT2', 'RARM_JOINT3'],
-        'RARM_JOINT5': ['base_to_waist', 'CHEST_JOINT0', 'RARM_JOINT0', 'RARM_JOINT1', 'RARM_JOINT2', 'RARM_JOINT3', 'RARM_JOINT4'],
-        'RHAND': [],  # optional
-        'LHAND': []  # optional
+        'RARM_JOINT5': ['base_to_waist', 'CHEST_JOINT0', 'RARM_JOINT0', 'RARM_JOINT1', 'RARM_JOINT2', 'RARM_JOINT3', 'RARM_JOINT4']
     }
 
 
@@ -137,6 +129,7 @@ class Simulation(Simulation_base):
         joint_x = joint_rot_axis[0]
         joint_y = joint_rot_axis[1]
         joint_z = joint_rot_axis[2]
+
         if joint_x == 1:
             rotation_matrix = np.matrix([[1, 0, 0],
                                          [0, np.cos(theta), -np.sin(theta)],
@@ -147,7 +140,7 @@ class Simulation(Simulation_base):
                                          [-np.sin(theta), 0, np.cos(theta)]])
         elif joint_z == 1:
             rotation_matrix = np.matrix([[np.cos(theta), -np.sin(theta), 0],
-                                         [np.sin(theta), np.cos(theta), 0]
+                                         [np.sin(theta), np.cos(theta), 0],
                                          [0, 0, 1]])
         else:
             rotation_matrix = np.zeros(9).reshape(3, 3)
@@ -166,9 +159,9 @@ class Simulation(Simulation_base):
             # Rotation
             result = self.getJointRotationalMatrix(jointName=joint_name, theta=angle)
             # Translation
-            result.c_(self.frameTranslationFromParent.get(joint_name))
+            result = np.c_[result, self.frameTranslationFromParent[joint_name]]
             # homogenous
-            result.append(np.array([0, 0, 0, 1]))
+            result = np.concatenate((result, np.array([[0, 0, 0, 1]])), axis=0)
             transformationMatrices[joint_name] = result
         return transformationMatrices
 
@@ -183,7 +176,7 @@ class Simulation(Simulation_base):
         JointToWorldFrame = homogeneousTransformationMatrices.get(jointName)
         for next_joint in transformationOrder:
             JointToWorldFrame = homogeneousTransformationMatrices.get(next_joint) * JointToWorldFrame
-        return JointToWorldFrame[0:2, 3], JointToWorldFrame[0:2, 0:2]
+        return (JointToWorldFrame[0:3, 3]).squeeze(), JointToWorldFrame[0:3, 0:3]
         # Hint: return two numpy arrays, a 3x1 array for the position vector,
         # and a 3x3 array for the rotation matrix
         # return pos, rotmat
@@ -212,8 +205,8 @@ class Simulation(Simulation_base):
             # position
             temp = np.cross(self.getJointAxis(joint), self.getJointPosition(endEffector) - self.getJointPosition(joint))
             # orientation
-            # temp.c_(np.cross(self.getJointAxis(joint), self.getJointAxis(endEffector)))
-            jacobian.append(temp)
+            # temp = np.c_[temp, np.cross(self.getJointAxis(joint), self.getJointAxis(endEffector))]
+            jacobian = np.append(jacobian, temp, axis=0)
         return jacobian.T
 
         # You can implement the cross product yourself or use calculateJacobian().
@@ -241,6 +234,9 @@ class Simulation(Simulation_base):
             Vector of x_refs
         """
         curr_pos = self.getJointPosition(endEffector)
+        print(curr_pos)
+        print(curr_pos.shape)
+        print(targetPosition)
         targets = np.linspace(curr_pos, targetPosition, interpolationSteps)
         x_refs = np.array([])
         for target in targets:
@@ -250,16 +246,16 @@ class Simulation(Simulation_base):
                 # Calculate dy
                 dy = target - self.getJointPosition(endEffector)
                 # Calculate delta
-                drad = np.linalg.pinv(jacobian) @ dy
+                drad = np.linalg.pinv(jacobian) @ dy.T
                 # Update joint angles
                 for j, joint in enumerate(self.transformationOrderJointReversed[endEffector]):
                     self.p.resetJointState(self.robot, self.jointIds[joint], self.getJointPos(joint) + drad[j])
                 curr_pos = self.getJointPosition(endEffector)
-                if np.norm(curr_pos - target) < threshold:
+                if np.linalg.norm(curr_pos - target) < threshold:
                     temp = {}
                     for joint in self.transformationOrderJointReversed[endEffector]:
                         temp[joint] = self.getJointPos(joint)
-                    x_refs.append(temp)
+                    x_refs = np.append(x_refs, temp)
                     break
         return x_refs
         # Hint: return a numpy array which includes the reference angular
@@ -276,8 +272,13 @@ class Simulation(Simulation_base):
         """
         # TODO add your code here
         # iterate through joints and update joint states based on IK solver
-
-        # return pltTime, pltDistance
+        result = self.inverseKinematics(endEffector, targetPosition, orientation, 10, maxIter, threshold)
+        pltTime = np.arange(0, speed * len(result), speed)
+        print(type(result[0]))
+        funct = lambda x: x.get(endEffector)
+        #funct = lambda x: np.linalg.norm(targetPosition - x.get(endEffector))
+        pltDistance = np.array(list(map(funct, result)))
+        return pltTime, pltDistance
         pass
 
     def tick_without_PD(self):
