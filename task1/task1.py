@@ -64,8 +64,9 @@ sim = Simulation(pybulletConfigs, robotConfigs, refVect=ref)
 endEffector = "LARM_JOINT5"
 targetPosition = np.array([0.37, 0.23, 1.06385])  # x,y,z coordinates in world frame
 print(0.85+0.267)
-sim.getJointLocationAndOrientation('CHEST_JOINT0')
-
+print(sim.getJointLocationAndOrientation('CHEST_JOINT0'))
+ori_orient = sim.getJointOrientation(endEffector)
+print(ori_orient)
 
 # Example code. Feel free to modify
 pltTime, pltEFPosition = sim.move_without_PD(endEffector, targetPosition, speed=0.01, orientation=None, threshold=1e-3, maxIter=3000, debug=False, verbose=False)
