@@ -62,7 +62,7 @@ sim = Simulation(pybulletConfigs, robotConfigs, refVect=ref)
 # frame is located at the waist, you will need to transform this vector using
 # the base_to_waist translation.
 endEffector = "LARM_JOINT5"
-targetPosition = np.array([0.37, 0.23, 1.06385])  # x,y,z coordinates in world frame
+targetPosition = np.array([0.35, 0.23, 1.06])  # x,y,z coordinates in world frame
 print(0.85+0.267)
 sim.getJointLocationAndOrientation('CHEST_JOINT0')
 

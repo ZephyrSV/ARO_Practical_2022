@@ -30,7 +30,7 @@ class Simulation(Simulation_base):
     # Task 1.1 Forward Kinematics
     jointRotationAxis = {
         'base_to_dummy': np.zeros(3),  # Virtual joint
-        'base_to_waist': np.array([0, 0, 1]),  # Fixed joint   ######!!!!
+        'base_to_waist': np.array([0, 0, 0]),  # Fixed joint   ######!!!!
         # TODO: modify from here
         'CHEST_JOINT0': np.array([0, 0, 1]),
         'HEAD_JOINT0': np.array([0, 0, 1]),
@@ -94,21 +94,20 @@ class Simulation(Simulation_base):
         'base_to_dummy': [], # Virtual joint
         'base_to_waist': [], # Fixed joint
         'CHEST_JOINT0': ['base_to_waist'],
-        'HEAD_JOINT0': ['base_to_waist', 'CHEST_JOINT0'],
-        'HEAD_JOINT1': ['base_to_waist', 'CHEST_JOINT0', 'HEAD_JOINT0'],
-        'LARM_JOINT0': ['base_to_waist', 'CHEST_JOINT0'],
-        'LARM_JOINT1': ['base_to_waist', 'CHEST_JOINT0', 'LARM_JOINT0'],
-        'LARM_JOINT2': ['base_to_waist', 'CHEST_JOINT0', 'LARM_JOINT0', 'LARM_JOINT1'],
-        'LARM_JOINT3': ['base_to_waist', 'CHEST_JOINT0', 'LARM_JOINT0', 'LARM_JOINT1', 'LARM_JOINT2'],
-        'LARM_JOINT4': ['base_to_waist', 'CHEST_JOINT0', 'LARM_JOINT0', 'LARM_JOINT1', 'LARM_JOINT2', 'LARM_JOINT3'],
-        'LARM_JOINT5': ['base_to_waist', 'CHEST_JOINT0', 'LARM_JOINT0', 'LARM_JOINT1', 'LARM_JOINT2', 'LARM_JOINT3', 'LARM_JOINT4'],
-        #'LARM_JOINT5': ['LARM_JOINT0', 'LARM_JOINT1', 'LARM_JOINT2', 'LARM_JOINT3', 'LARM_JOINT4'],
-        'RARM_JOINT0': ['base_to_waist', 'CHEST_JOINT0'],
-        'RARM_JOINT1': ['base_to_waist', 'CHEST_JOINT0', 'RARM_JOINT0'],
-        'RARM_JOINT2': ['base_to_waist', 'CHEST_JOINT0', 'RARM_JOINT0', 'RARM_JOINT1'],
-        'RARM_JOINT3': ['base_to_waist', 'CHEST_JOINT0', 'RARM_JOINT0', 'RARM_JOINT1', 'RARM_JOINT2'],
-        'RARM_JOINT4': ['base_to_waist', 'CHEST_JOINT0', 'RARM_JOINT0', 'RARM_JOINT1', 'RARM_JOINT2', 'RARM_JOINT3'],
-        'RARM_JOINT5': ['base_to_waist', 'CHEST_JOINT0', 'RARM_JOINT0', 'RARM_JOINT1', 'RARM_JOINT2', 'RARM_JOINT3', 'RARM_JOINT4']
+        'HEAD_JOINT0': ['CHEST_JOINT0'],
+        'HEAD_JOINT1': ['CHEST_JOINT0', 'HEAD_JOINT0'],
+        'LARM_JOINT0': ['CHEST_JOINT0'],
+        'LARM_JOINT1': ['CHEST_JOINT0', 'LARM_JOINT0'],
+        'LARM_JOINT2': ['CHEST_JOINT0', 'LARM_JOINT0', 'LARM_JOINT1'],
+        'LARM_JOINT3': ['CHEST_JOINT0', 'LARM_JOINT0', 'LARM_JOINT1', 'LARM_JOINT2'],
+        'LARM_JOINT4': ['CHEST_JOINT0', 'LARM_JOINT0', 'LARM_JOINT1', 'LARM_JOINT2', 'LARM_JOINT3'],
+        'LARM_JOINT5': ['CHEST_JOINT0', 'LARM_JOINT0', 'LARM_JOINT1', 'LARM_JOINT2', 'LARM_JOINT3', 'LARM_JOINT4'],
+        'RARM_JOINT0': ['CHEST_JOINT0'],
+        'RARM_JOINT1': ['CHEST_JOINT0', 'RARM_JOINT0'],
+        'RARM_JOINT2': ['CHEST_JOINT0', 'RARM_JOINT0', 'RARM_JOINT1'],
+        'RARM_JOINT3': ['CHEST_JOINT0', 'RARM_JOINT0', 'RARM_JOINT1', 'RARM_JOINT2'],
+        'RARM_JOINT4': ['CHEST_JOINT0', 'RARM_JOINT0', 'RARM_JOINT1', 'RARM_JOINT2', 'RARM_JOINT3'],
+        'RARM_JOINT5': ['CHEST_JOINT0', 'RARM_JOINT0', 'RARM_JOINT1', 'RARM_JOINT2', 'RARM_JOINT3', 'RARM_JOINT4']
     }
 
 
@@ -144,7 +143,7 @@ class Simulation(Simulation_base):
                                          [np.sin(theta), np.cos(theta), 0],
                                          [0, 0, 1]])
         else:
-            rotation_matrix = np.zeros(9).reshape(3, 3)
+            rotation_matrix = np.identity(3)
 
         return rotation_matrix
 
@@ -200,11 +199,13 @@ class Simulation(Simulation_base):
 
     def jacobianMatrix(self, endEffector):
         """Calculate the Jacobian Matrix for the Nextage Robot."""
-        jacobian = np.cross(self.getJointAxis(endEffector), self.getJointPosition(endEffector))
+        joints = self.transformationOrderJointReversed[endEffector]
+        jacobian = np.cross(self.jointRotationAxis[joints[0]], self.getJointPosition(endEffector) - self.getJointPosition(joints[0]))
         jacobian.reshape(1, 3)
-        for joint in self.transformationOrderJointReversed[endEffector][1:]:
+        for joint in joints[1:]: # skip the first joint since we already calculated it
             # position
-            temp = np.cross(self.getJointAxis(joint), self.getJointPosition(endEffector) - self.getJointPosition(joint))
+            print(self.jointRotationAxis[joint])
+            temp = np.cross(self.jointRotationAxis[joint], self.getJointPosition(endEffector) - self.getJointPosition(joint))
             # orientation
             # temp = temp + np.cross(self.getJointAxis(joint), self.getJointAxis(endEffector))]
             jacobian = np.append(jacobian, temp, axis=0)
