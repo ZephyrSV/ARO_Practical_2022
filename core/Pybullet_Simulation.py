@@ -30,7 +30,7 @@ class Simulation(Simulation_base):
     # Task 1.1 Forward Kinematics
     jointRotationAxis = {
         'base_to_dummy': np.zeros(3),  # Virtual joint
-        'base_to_waist': np.array([0, 0, 0]),  # Fixed joint   ######!!!!
+        'base_to_waist': np.zeros(3),  # Fixed joint   ######!!!!
         # TODO: modify from here
         'CHEST_JOINT0': np.array([0, 0, 1]),
         'HEAD_JOINT0': np.array([0, 0, 1]),
@@ -70,7 +70,7 @@ class Simulation(Simulation_base):
         'RARM_JOINT5': np.array([0, 0, -0.1335])
     }
 
-    transformationOrderJoint = {
+    jointOrderFK = {
         'base_to_dummy': [], # Virtual joint
         'base_to_waist': [], # Fixed joint
         'CHEST_JOINT0': ['base_to_waist'],
@@ -90,7 +90,7 @@ class Simulation(Simulation_base):
         'RARM_JOINT5': ['RARM_JOINT4', 'RARM_JOINT3', 'RARM_JOINT2', 'RARM_JOINT1', 'RARM_JOINT0', 'CHEST_JOINT0', 'base_to_waist']
     }
 
-    transformationOrderJointReversed = {
+    jointOrderIK = {
         'base_to_dummy': [], # Virtual joint
         'base_to_waist': [], # Fixed joint
         'CHEST_JOINT0': ['base_to_waist'],
@@ -101,7 +101,8 @@ class Simulation(Simulation_base):
         'LARM_JOINT2': ['CHEST_JOINT0', 'LARM_JOINT0', 'LARM_JOINT1'],
         'LARM_JOINT3': ['CHEST_JOINT0', 'LARM_JOINT0', 'LARM_JOINT1', 'LARM_JOINT2'],
         'LARM_JOINT4': ['CHEST_JOINT0', 'LARM_JOINT0', 'LARM_JOINT1', 'LARM_JOINT2', 'LARM_JOINT3'],
-        'LARM_JOINT5': ['CHEST_JOINT0', 'LARM_JOINT0', 'LARM_JOINT1', 'LARM_JOINT2', 'LARM_JOINT3', 'LARM_JOINT4'],
+        # 'LARM_JOINT5': ['CHEST_JOINT0', 'LARM_JOINT0', 'LARM_JOINT1', 'LARM_JOINT2', 'LARM_JOINT3', 'LARM_JOINT4'],
+        'LARM_JOINT5': ['LARM_JOINT0', 'LARM_JOINT1', 'LARM_JOINT2', 'LARM_JOINT3', 'LARM_JOINT4'],
         'RARM_JOINT0': ['CHEST_JOINT0'],
         'RARM_JOINT1': ['CHEST_JOINT0', 'RARM_JOINT0'],
         'RARM_JOINT2': ['CHEST_JOINT0', 'RARM_JOINT0', 'RARM_JOINT1'],
@@ -172,7 +173,7 @@ class Simulation(Simulation_base):
         """
         # Remember to multiply the transformation matrices following the kinematic chain for each arm.
         homogeneousTransformationMatrices = self.getTransformationMatrices()
-        transformationOrder = self.transformationOrderJoint.get(jointName)
+        transformationOrder = self.jointOrderFK.get(jointName)
         JointToWorldFrame = homogeneousTransformationMatrices.get(jointName)
         for next_joint in transformationOrder:
             JointToWorldFrame = homogeneousTransformationMatrices.get(next_joint) * JointToWorldFrame
@@ -199,12 +200,11 @@ class Simulation(Simulation_base):
 
     def jacobianMatrix(self, endEffector):
         """Calculate the Jacobian Matrix for the Nextage Robot."""
-        joints = self.transformationOrderJointReversed[endEffector]
+        joints = self.jointOrderIK[endEffector]
         jacobian = np.cross(self.jointRotationAxis[joints[0]], self.getJointPosition(endEffector) - self.getJointPosition(joints[0]))
         jacobian.reshape(1, 3)
         for joint in joints[1:]: # skip the first joint since we already calculated it
             # position
-            print(self.jointRotationAxis[joint])
             temp = np.cross(self.jointRotationAxis[joint], self.getJointPosition(endEffector) - self.getJointPosition(joint))
             # orientation
             # temp = temp + np.cross(self.getJointAxis(joint), self.getJointAxis(endEffector))]
@@ -236,32 +236,17 @@ class Simulation(Simulation_base):
             Vector of x_refs
         """
         curr_pos = self.getJointPosition(endEffector)
-        targets = np.linspace(curr_pos, targetPosition, interpolationSteps)
-        x_refs = np.array([])
-        for target in targets:
-            for i in range(maxIterPerStep):
-                # Calculate Jacobian
-                jacobian = self.jacobianMatrix(endEffector)
-                # Calculate dy
-                dy = target - self.getJointPosition(endEffector)
-                # Calculate delta
-                drad = np.linalg.pinv(jacobian) @ dy.T
-                # Update joint angles
-                for j, joint in enumerate(self.transformationOrderJointReversed[endEffector]):
-                    self.p.resetJointState(self.robot, self.jointIds[joint], self.getJointPos(joint) + drad[j])
-                curr_pos = self.getJointPosition(endEffector)
-                if np.linalg.norm(curr_pos - target) < threshold:
-                    temp = {}
-                    temp[endEffector] = self.getJointPosition(endEffector)
-                    print(f"JOINT NAME {endEffector}")
-                    print(f"JOINT POS {self.getJointPosition(endEffector)}")
-                    for joint in self.transformationOrderJointReversed[endEffector]:
-                        temp[joint] = self.getJointPosition(joint)
-                        print(f"JOINT NAME {joint}")
-                        print(f"JOINT POS {self.getJointPosition(joint)}")
-                    x_refs = np.append(x_refs, temp)
-                    break
-        return x_refs
+        # Calculate Jacobian
+        jacobian = self.jacobianMatrix(endEffector)
+        # Calculate dy
+        dy = targetPosition - curr_pos
+        # Calculate delta
+        drad = np.linalg.pinv(jacobian) @ dy.T
+        curr_q = {}
+        for j, joint in enumerate(self.jointOrderIK[endEffector]):
+            curr_q[joint] = self.getJointPos(joint) + drad[j,0]
+
+        return curr_q
         # Hint: return a numpy array which includes the reference angular
         # positions for all joints after performing inverse kinematics.
         pass
@@ -274,13 +259,17 @@ class Simulation(Simulation_base):
         Return:
             pltTime, pltDistance arrays used for plotting
         """
-        # TODO add your code here
         # iterate through joints and update joint states based on IK solver
-        result = self.inverseKinematics(endEffector, targetPosition, orientation, 50, maxIter, threshold)
-        pltTime = np.arange(0, speed * len(result), speed)
-        print(type(result[0]))
-        funct = lambda x: np.linalg.norm(targetPosition - x.get(endEffector))
-        pltDistance = np.array(list(map(funct, result)))
+        interSteps = 100
+        pltDistance = []
+        pltTime = np.linspace(0, 1, interSteps)
+        targets = np.linspace(self.getJointPosition(endEffector), targetPosition, interSteps)
+        for target in targets:
+            x_refs = self.inverseKinematics(endEffector, target, orientation, 50, maxIter, threshold)
+            for joint in x_refs:
+                self.p.resetJointState(self.robot, self.jointIds[joint], x_refs[joint])
+            pltDistance.append(np.linalg.norm(self.getJointPosition(endEffector) - targetPosition))
+            time.sleep(0.01)
         return pltTime, pltDistance
         pass
 
