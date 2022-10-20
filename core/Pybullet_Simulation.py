@@ -278,6 +278,8 @@ class Simulation(Simulation_base):
         # TODO modify from here
         # Iterate through all joints and update joint states.
         # For each joint, you can use the shared variable self.jointTargetPos.
+        for joint, targetPos in self.jointTargetPos.items():
+            self.p.resetJointState(self.robot, self.jointIds[joint], targetPos)
 
         self.p.stepSimulation()
         self.drawDebugLines()
@@ -299,7 +301,9 @@ class Simulation(Simulation_base):
         Returns: \\
             u(t) - the manipulation signal
         """
-        # TODO: Add your code here
+        error = x_ref - x_real
+        derror = dx_ref - dx_real
+        return kp * error + kd * derror + ki * integral
         pass
 
     # Task 2.2 Joint Manipulation
@@ -320,7 +324,7 @@ class Simulation(Simulation_base):
 
             ### Start your code here: ###
             # Calculate the torque with the above method you've made
-            torque = 0.0
+            torque = self.calculateTorque(x_ref, x_real, dx_ref, dx_real, integral, kp, ki, kd)
             ### To here ###
 
             pltTorque.append(torque)
