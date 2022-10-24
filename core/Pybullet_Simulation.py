@@ -349,17 +349,22 @@ class Simulation(Simulation_base):
         pltTime, pltTarget, pltTorque, pltTorqueTime, pltPosition, pltVelocity = [], [], [], [], [], []
 
         errorIntegral = 0
+        oldPosition = float(self.getJointPos(joint))
+        dx_real = 0
         simulationTime = 0
-        while abs(targetPosition - float(self.getJointPos(joint))) > 0.01 or abs(targetVelocity - float(self.getJointVel(joint))) > 0.01:
+        while abs(targetPosition - oldPosition) > 0.01 or abs(targetVelocity - dx_real) > 0.01:
             # get current joint state
             x_real = self.getJointPos(joint)
-            dx_real = self.getJointVel(joint)
+            dx_real = (x_real - oldPosition) / self.dt
 
             # calculate the error integral
             errorIntegral += (targetPosition - x_real) * self.dt
 
             # call the tick function
             toy_tick(targetPosition, x_real, targetVelocity, dx_real, errorIntegral)
+
+            # update the old position
+            oldPosition = x_real
 
             # logging for the graph
             simulationTime += self.dt
