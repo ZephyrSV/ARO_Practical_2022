@@ -75,7 +75,7 @@ plt.plot(pltTime, pltVelocity, color='lightblue')
 plt.ylabel("Velocity rads/s")
 
 plt.subplot(313)
-plt.plot(pltTorqueTime, pltTorque, color='orange')
+plt.plot(pltTorqueTime[2:], pltTorque[2:], color='orange')
 plt.xlabel("Time s")
 plt.ylabel("Torque N")
 

@@ -342,11 +342,33 @@ class Simulation(Simulation_base):
 
         targetPosition, targetVelocity = float(targetPosition), float(targetVelocity)
 
+
         # disable joint velocity controller before apply a torque
         self.disableVelocityController(joint)
         # logging for the graph
         pltTime, pltTarget, pltTorque, pltTorqueTime, pltPosition, pltVelocity = [], [], [], [], [], []
 
+        errorIntegral = 0
+        simulationTime = 0
+        while abs(targetPosition - float(self.getJointPos(joint))) > 0.01 or abs(targetVelocity - float(self.getJointVel(joint))) > 0.01:
+            # get current joint state
+            x_real = self.getJointPos(joint)
+            dx_real = self.getJointVel(joint)
+
+            # calculate the error integral
+            errorIntegral += (targetPosition - x_real) * self.dt
+
+            # call the tick function
+            toy_tick(targetPosition, x_real, targetVelocity, dx_real, errorIntegral)
+
+            # logging for the graph
+            simulationTime += self.dt
+            pltTime.append(simulationTime)
+            pltTarget.append(targetPosition)
+            pltPosition.append(x_real)
+            pltVelocity.append(dx_real)
+
+        pltTorqueTime = pltTime
         return pltTime, pltTarget, pltTorque, pltTorqueTime, pltPosition, pltVelocity
 
     def move_with_PD(self, endEffector, targetPosition, speed=0.01, orientation=None,
