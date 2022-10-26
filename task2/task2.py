@@ -47,7 +47,7 @@ robotConfigs = {
 sim = Simulation(pybulletConfigs, robotConfigs)
 
 # This is an example target (angular) position for the joint LARM_JOINT2
-task2_jointName = "CHEST_JOINT0"
+task2_jointName = "LARM_JOINT1"
 task2_targetPosition = np.deg2rad(-45)  # joint (angular) position in radians
 task2_targetVelocity = 0.0  # joint (angular) velocity in radians per second
 verbose = False
@@ -55,7 +55,7 @@ task2_figure_name = "task2_PD_response.png"
 task2_savefig = False
 ### to here
 
-
+"""
 pltTime, pltTarget, pltTorque, pltTorqueTime, pltPosition, pltVelocity = \
     sim.moveJoint(
         task2_jointName, task2_targetPosition, task2_targetVelocity, verbose)
@@ -86,3 +86,35 @@ plt.subplots_adjust(left=0.15)
 if task2_savefig:
     fig.savefig(task2_figure_name)
 plt.show()
+"""
+
+
+endEffector = "LARM_JOINT5"
+targetPosition = np.array([0.37, 0.23, 1.06])  # x,y,z coordinates in world frame
+print(0.85+0.267)
+sim.getJointLocationAndOrientation('CHEST_JOINT0')
+
+
+# Example code. Feel free to modify
+pltTime, pltEFPosition = sim.move_with_PD(endEffector, targetPosition, speed=0.01, orientation=None, threshold=1e-3, maxIter=30000, debug=False, verbose=False)
+
+
+# Now plot some graphs
+task1_figure_name = "task2_kinematics.png"
+task1_savefig = True
+# ...
+
+fig = plt.figure(figsize=(6, 4))
+
+plt.plot(pltTime, pltEFPosition, color='blue')
+plt.xlabel("Time s")
+plt.ylabel("Distance to target position")
+
+plt.suptitle("task2 IK WITH PD", size=16)
+plt.tight_layout()
+plt.subplots_adjust(left=0.15)
+
+if task1_savefig:
+    fig.savefig(task1_figure_name)
+plt.show()
+# """

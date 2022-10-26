@@ -152,6 +152,7 @@ class Simulation_base:
         self.colorPalettes = {
             "lightOrange": [1.0, 0.82, 0.12, 1.0],
             "darkOrange": [1.0, 0.6, 0.0, 1.0],
+            "red": [1.0, 0.0, 0.0, 1.0],
             "darkGrey": [0.43, 0.43, 0.43, 1.0],
             "lightGrey": [0.65, 0.65, 0.65, 1.0],
         }
@@ -210,7 +211,7 @@ class Simulation_base:
             'HEAD_JOINT0': "darkOrange",
             'HEAD_JOINT1': "lightOrange",
             'LARM_JOINT0': "darkOrange",
-            'LARM_JOINT1': "lightOrange",
+            'LARM_JOINT1': "red",
             'LARM_JOINT2': "darkOrange",
             'LARM_JOINT3': "lightOrange",
             'LARM_JOINT4': "darkOrange",

@@ -111,6 +111,9 @@ class Simulation(Simulation_base):
         'RARM_JOINT5': ['CHEST_JOINT0', 'RARM_JOINT0', 'RARM_JOINT1', 'RARM_JOINT2', 'RARM_JOINT3', 'RARM_JOINT4']
     }
 
+    oldPositions = {}
+    errorIntegral = {}
+
 
 
 
@@ -267,15 +270,14 @@ class Simulation(Simulation_base):
         for target in targets:
             x_refs = self.inverseKinematics(endEffector, target, orientation, 50, maxIter, threshold)
             for joint in x_refs:
-                self.p.resetJointState(self.robot, self.jointIds[joint], x_refs[joint])
+                self.jointTargetPos[joint] = x_refs[joint]
             pltDistance.append(np.linalg.norm(self.getJointPosition(endEffector) - targetPosition))
-            time.sleep(0.01)
+            self.tick_without_PD()
         return pltTime, pltDistance
         pass
 
     def tick_without_PD(self):
         """Ticks one step of simulation without PD control. """
-        # TODO modify from here
         # Iterate through all joints and update joint states.
         # For each joint, you can use the shared variable self.jointTargetPos.
         for joint, targetPos in self.jointTargetPos.items():
@@ -336,6 +338,14 @@ class Simulation(Simulation_base):
                 controlMode=self.p.TORQUE_CONTROL,
                 force=torque
             )
+            compensation = self.jointGravCompensation[joint]
+            self.p.applyExternalForce(
+                objectUniqueId=self.robot,
+                linkIndex=self.jointIds[joint],
+                forceObj=[0, 0, -compensation],
+                posObj=self.getLinkCoM(joint),
+                flags=self.p.WORLD_FRAME
+            )
             # calculate the physics and update the world
             self.p.stepSimulation()
             time.sleep(self.dt)
@@ -394,17 +404,33 @@ class Simulation(Simulation_base):
         # all IK iterations (optional).
 
         # return pltTime, pltDistance
+
+        pltDistance = []
+        for i in range(maxIter):
+            x_refs = self.inverseKinematics(endEffector, targetPosition, orientation, 50, maxIter, threshold)
+            self.jointTargetPos = {}
+            for joint in x_refs:
+                self.jointTargetPos[joint] = x_refs[joint]
+            pltDistance.append(np.linalg.norm(self.getJointPosition(endEffector) - targetPosition))
+            self.tick()
+            if (np.linalg.norm(self.getJointPosition(endEffector) - targetPosition) < 0.001):
+                break
+
+        pltTime = np.linspace(0, len(pltDistance)*self.dt, len(pltDistance))
+        return pltTime, pltDistance
         pass
 
     def tick(self):
         """Ticks one step of simulation using PD control."""
         # Iterate through all joints and update joint states using PD control.
-        for joint in self.joints:
+        x_real = self.getJointPoses(self.joints)
+        if (not self.oldPositions):  # check if oldPositions is empty
+            self.oldPositions = x_real
+        for joint in self.jointTargetPos:
             # skip dummy joints (world to base joint)
             jointController = self.jointControllers[joint]
             if jointController == 'SKIP_THIS_JOINT':
                 continue
-
             # disable joint velocity controller before apply a torque
             self.disableVelocityController(joint)
 
@@ -414,8 +440,12 @@ class Simulation(Simulation_base):
             kd = self.ctrlConfig[jointController]['pid']['d']
 
             ### Implement your code from here ... ###
-            # TODO: obtain torque from PD controller
-            torque = 0.0  # TODO: fix me
+            x_ref = self.jointTargetPos[joint]
+            dx_ref = self.jointTargetVels.get(joint, 0)
+            #dx_real = (x_real[joint] - self.oldPositions[joint]) / self.dt
+            dx_real = self.getJointVel(joint)
+            self.errorIntegral[joint] = self.errorIntegral.get(joint, 0) + (x_ref - x_real[joint]) * self.dt
+            torque = self.calculateTorque(x_ref, x_real[joint], dx_ref, dx_real, self.errorIntegral[joint], kp, ki, kd)
             ### ... to here ###
 
             self.p.setJointMotorControl2(
