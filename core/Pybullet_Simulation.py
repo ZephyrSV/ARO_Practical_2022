@@ -205,11 +205,13 @@ class Simulation(Simulation_base):
         """Calculate the Jacobian Matrix for the Nextage Robot."""
         joints = self.jointOrderIK[endEffector]
         jacobian = np.cross(self.jointRotationAxis[joints[0]], self.getJointPosition(endEffector) - self.getJointPosition(joints[0]))
-        jacobian.reshape(1, 3)
+        jacobian = np.hstack([jacobian, np.cross(self.jointRotationAxis[joints[0]], self.jointRotationAxis[endEffector]).reshape((1,3))])
+        jacobian.reshape(1, 6)
         for joint in joints[1:]: # skip the first joint since we already calculated it
             # position
             temp = np.cross(self.jointRotationAxis[joint], self.getJointPosition(endEffector) - self.getJointPosition(joint))
             # orientation
+            temp = np.hstack([temp, np.cross(self.jointRotationAxis[joint], self.jointRotationAxis[endEffector]).reshape((1,3))])
             # temp = temp + np.cross(self.getJointAxis(joint), self.getJointAxis(endEffector))]
             jacobian = np.append(jacobian, temp, axis=0)
         return jacobian.T
@@ -243,8 +245,17 @@ class Simulation(Simulation_base):
         jacobian = self.jacobianMatrix(endEffector)
         # Calculate dy
         dy = targetPosition - curr_pos
+        dori = (orientation - self.getJointOrientation(endEffector)).reshape((1,3))
+        if orientation is not None:
+            dy = np.hstack([dy, dori])
         # Calculate delta
-        drad = np.linalg.pinv(jacobian) @ dy.T
+        if orientation is None:
+            drad = np.linalg.pinv(jacobian[0:3, :]) @ dy.T
+        else:
+            drad = np.linalg.pinv(jacobian) @ dy.T
+
+
+
         curr_q = {}
         for j, joint in enumerate(self.jointOrderIK[endEffector]):
             curr_q[joint] = self.getJointPos(joint) + drad[j,0]
@@ -267,8 +278,9 @@ class Simulation(Simulation_base):
         pltDistance = []
         pltTime = np.linspace(0, 1, interSteps)
         targets = np.linspace(self.getJointPosition(endEffector), targetPosition, interSteps)
-        for target in targets:
-            x_refs = self.inverseKinematics(endEffector, target, orientation, 50, maxIter, threshold)
+        orientations = np.linspace(self.getJointOrientation(endEffector), orientation, interSteps)
+        for i, target in enumerate(targets):
+            x_refs = self.inverseKinematics(endEffector, target, orientations[i], 50, maxIter, threshold)
             for joint in x_refs:
                 self.jointTargetPos[joint] = x_refs[joint]
             pltDistance.append(np.linalg.norm(self.getJointPosition(endEffector) - targetPosition))
