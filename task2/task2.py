@@ -55,7 +55,7 @@ task2_figure_name = "task2_PD_response.png"
 task2_savefig = False
 ### to here
 
-#"""
+"""
 pltTime, pltTarget, pltTorque, pltTorqueTime, pltPosition, pltVelocity = \
     sim.moveJoint(
         task2_jointName, task2_targetPosition, task2_targetVelocity, verbose)
