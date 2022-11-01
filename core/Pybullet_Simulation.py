@@ -101,8 +101,8 @@ class Simulation(Simulation_base):
         'LARM_JOINT2': ['CHEST_JOINT0', 'LARM_JOINT0', 'LARM_JOINT1'],
         'LARM_JOINT3': ['CHEST_JOINT0', 'LARM_JOINT0', 'LARM_JOINT1', 'LARM_JOINT2'],
         'LARM_JOINT4': ['CHEST_JOINT0', 'LARM_JOINT0', 'LARM_JOINT1', 'LARM_JOINT2', 'LARM_JOINT3'],
-        # 'LARM_JOINT5': ['CHEST_JOINT0', 'LARM_JOINT0', 'LARM_JOINT1', 'LARM_JOINT2', 'LARM_JOINT3', 'LARM_JOINT4'],
-        'LARM_JOINT5': ['LARM_JOINT0', 'LARM_JOINT1', 'LARM_JOINT2', 'LARM_JOINT3', 'LARM_JOINT4'],
+        'LARM_JOINT5': ['CHEST_JOINT0', 'LARM_JOINT0', 'LARM_JOINT1', 'LARM_JOINT2', 'LARM_JOINT3', 'LARM_JOINT4'],
+        #'LARM_JOINT5': ['LARM_JOINT0', 'LARM_JOINT1', 'LARM_JOINT2', 'LARM_JOINT3', 'LARM_JOINT4'],
         'RARM_JOINT0': ['CHEST_JOINT0'],
         'RARM_JOINT1': ['CHEST_JOINT0', 'RARM_JOINT0'],
         'RARM_JOINT2': ['CHEST_JOINT0', 'RARM_JOINT0', 'RARM_JOINT1'],
@@ -113,6 +113,12 @@ class Simulation(Simulation_base):
 
     oldPositions = {}
     errorIntegral = {}
+
+    def myGetJointVel(self, jointName, x_real):
+        dx_real = (x_real[jointName] - self.oldPositions[jointName]) / self.dt
+        # dx_real = self.getJointVel(joint)
+        return dx_real
+
 
 
 
@@ -245,8 +251,8 @@ class Simulation(Simulation_base):
         jacobian = self.jacobianMatrix(endEffector)
         # Calculate dy
         dy = targetPosition - curr_pos
-        dori = (orientation - self.getJointOrientation(endEffector)).reshape((1,3))
         if orientation is not None:
+            dori = (orientation - self.getJointOrientation(endEffector)).reshape((1, 3))
             dy = np.hstack([dy, dori])
         # Calculate delta
         if orientation is None:
@@ -418,15 +424,39 @@ class Simulation(Simulation_base):
         # return pltTime, pltDistance
 
         pltDistance = []
-        for i in range(maxIter):
-            x_refs = self.inverseKinematics(endEffector, targetPosition, orientation, 50, maxIter, threshold)
+        iterCounter = 0
+        targetPositions = np.linspace(self.getJointPosition(endEffector), targetPosition, 50)
+
+        for target in targetPositions:
+            x_refs = self.inverseKinematics(endEffector, target, orientation, 50, maxIter, threshold)
+            while iterCounter < maxIter:
+                self.jointTargetPos = {}
+                for joint in x_refs:
+                    self.jointTargetPos[joint] = x_refs[joint]
+                pltDistance.append(np.linalg.norm(self.getJointPosition(endEffector) - targetPosition))
+                self.tick()
+
+                # if np.linalg.norm(self.getJointPosition(endEffector) - targetPosition) < 0.01 or False and abs(
+                #         self.myGetJointVel(endEffector, x_real)) < 5e-7:
+                if np.linalg.norm(self.getJointPosition(endEffector) - target) < 0.01:
+                    print("reached")
+                    break
+                iterCounter += 1
+        x_refs = self.inverseKinematics(endEffector, targetPosition, orientation, 50, maxIter, threshold)
+        while iterCounter < maxIter:
             self.jointTargetPos = {}
             for joint in x_refs:
                 self.jointTargetPos[joint] = x_refs[joint]
             pltDistance.append(np.linalg.norm(self.getJointPosition(endEffector) - targetPosition))
             self.tick()
-            if (np.linalg.norm(self.getJointPosition(endEffector) - targetPosition) < 0.001):
+
+            x_real = self.getJointPoses(self.joints)
+            if np.linalg.norm(self.getJointPosition(endEffector) - targetPosition) < 0.001 and abs(
+                    self.myGetJointVel(endEffector, x_real)) < 5e-7:
+                print("reached")
                 break
+            iterCounter += 1
+
 
         pltTime = np.linspace(0, len(pltDistance)*self.dt, len(pltDistance))
         return pltTime, pltDistance
@@ -454,8 +484,7 @@ class Simulation(Simulation_base):
             ### Implement your code from here ... ###
             x_ref = self.jointTargetPos[joint]
             dx_ref = self.jointTargetVels.get(joint, 0)
-            #dx_real = (x_real[joint] - self.oldPositions[joint]) / self.dt
-            dx_real = self.getJointVel(joint)
+            dx_real = self.myGetJointVel(joint, x_real)
             self.errorIntegral[joint] = self.errorIntegral.get(joint, 0) + (x_ref - x_real[joint]) * self.dt
             torque = self.calculateTorque(x_ref, x_real[joint], dx_ref, dx_real, self.errorIntegral[joint], kp, ki, kd)
             ### ... to here ###
@@ -479,7 +508,7 @@ class Simulation(Simulation_base):
                 flags=self.p.WORLD_FRAME
             )
             # Gravity compensation ends here
-
+        self.oldPositions = x_real
         self.p.stepSimulation()
         self.drawDebugLines()
         time.sleep(self.dt)
