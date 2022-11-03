@@ -90,7 +90,16 @@ def getReadyForTask():
 
 
 def solution():
-    # TODO: Add your code here
+    originalPos = sim.getJointPosition("LARM_JOINT5")
+    poses = np.array([
+        originalPos,
+        originalPos + np.array([0, 3, 0]),
+        ])
+    _,targets = sim.cubic_interpolation(poses, 10)
+    for target in targets:
+        sim.move_with_PD("LARM_JOINT5", target)
+        print(sim.getJointPosition("LARM_JOINT5"))
+
     pass
 
 tableId, cubeId, targetId = getReadyForTask()
