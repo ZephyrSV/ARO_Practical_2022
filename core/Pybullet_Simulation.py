@@ -439,7 +439,7 @@ class Simulation(Simulation_base):
                 # if np.linalg.norm(self.getJointPosition(endEffector) - targetPosition) < 0.01 or False and abs(
                 #         self.myGetJointVel(endEffector, x_real)) < 5e-7:
                 if np.linalg.norm(self.getJointPosition(endEffector) - target) < 0.01:
-                    print("reached")
+                    # print("reached")
                     break
                 iterCounter += 1
         x_refs = self.inverseKinematics(endEffector, targetPosition, orientation, 50, maxIter, threshold)
@@ -449,10 +449,10 @@ class Simulation(Simulation_base):
                 self.jointTargetPos[joint] = x_refs[joint]
             pltDistance.append(np.linalg.norm(self.getJointPosition(endEffector) - targetPosition))
             self.tick()
-
             x_real = self.getJointPoses(self.joints)
+            print(abs(self.myGetJointVel(endEffector, x_real)), 2.33e-6)
             if np.linalg.norm(self.getJointPosition(endEffector) - targetPosition) < 0.001 and abs(
-                    self.myGetJointVel(endEffector, x_real)) < 5e-7:
+                    self.myGetJointVel(endEffector, x_real)) < 2.6e-6:
                 print("reached")
                 break
             iterCounter += 1
@@ -520,12 +520,14 @@ class Simulation(Simulation_base):
         cubic spline defined by the control points,
         sampled nTimes along the curve.
         """
-        # TODO add your code here
+        xpoints = np.linspace(points[0], points[-1], nTimes)
+        #cubic spline interpolation with boundary conditions for velocity = 0
+        ypoints = CubicSpline.splev(xpoints, CubicSpline.splrep(points, xpoints, k=3, s=0), der=0)
+
+        return xpoints, ypoints
         # Return 'nTimes' points per dimension in 'points' (typically a 2xN array),
         # sampled from a cubic spline defined by 'points' and a boundary condition.
         # You may use methods found in scipy.interpolate
-
-        # return xpoints, ypoints
         pass
 
     # Task 3.1 Pushing
