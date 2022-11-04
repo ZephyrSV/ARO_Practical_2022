@@ -405,7 +405,7 @@ class Simulation(Simulation_base):
         return pltTime, pltTarget, pltTorque, pltTorqueTime, pltPosition, pltVelocity
 
     def move_with_PD(self, endEffector, targetPosition, speed=0.01, orientation=None,
-                     threshold=1e-3, maxIter=3000, debug=False, verbose=False):
+                     threshold=1e-3, maxIter=3000, debug=False, verbose=False, velocityControl=False):
         """
         Move joints using inverse kinematics solver and using PD control.
         This method should update joint states using the torque output from the PD controller.
@@ -426,7 +426,7 @@ class Simulation(Simulation_base):
         pltDistance = []
         iterCounter = 0
         targetPositions = np.linspace(self.getJointPosition(endEffector), targetPosition, 50)
-
+        print("move_with_PD: targetPosition", targetPosition)
         for target in targetPositions:
             x_refs = self.inverseKinematics(endEffector, target, orientation, 50, maxIter, threshold)
             while iterCounter < maxIter:
@@ -450,9 +450,8 @@ class Simulation(Simulation_base):
             pltDistance.append(np.linalg.norm(self.getJointPosition(endEffector) - targetPosition))
             self.tick()
             x_real = self.getJointPoses(self.joints)
-            print(abs(self.myGetJointVel(endEffector, x_real)), 2.33e-6)
-            if np.linalg.norm(self.getJointPosition(endEffector) - targetPosition) < 0.001 and abs(
-                    self.myGetJointVel(endEffector, x_real)) < 2.6e-6:
+            if np.linalg.norm(self.getJointPosition(endEffector) - targetPosition) < 0.005 and (not velocityControl or abs(
+                    self.myGetJointVel(endEffector, x_real)) < 2.6e-5):
                 print("reached")
                 break
             iterCounter += 1

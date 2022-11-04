@@ -90,15 +90,23 @@ plt.show()
 
 
 endEffector = "LARM_JOINT5"
-targetPosition = np.array([0.37, 0.23, 1.06])  # x,y,z coordinates in world frame
+# targetPosition = np.array([0.37, 0.23, 1.06])  # x,y,z coordinates in world frame
+targetPosition = np.array([[0.37066581, 0.23061941, 1.06002551],
+                           [0.37044753, 0.1375494,  1.06001715],
+                           [0.37025116, 0.08729813, 1.06000962],
+                           [0.37009864, 0.12268436, 1.06000378],
+                           [0.37001187, 0.28652682, 1.06000045],
+                           [0.37001187, 0.61986015, 1.06000045],
+                           [0.37009864, 1.12268436, 1.06000378],
+                           [0.37025116, 1.7539648 , 1.06000962],
+                           [0.37044753, 2.47088273, 1.06001715],
+                           [0.37066581, 3.23061941, 1.06002551]])
 print(0.85+0.267)
 sim.getJointLocationAndOrientation('CHEST_JOINT0')
 
 
 # Example code. Feel free to modify
-pltTime, pltEFPosition = sim.move_with_PD(endEffector, targetPosition, speed=0.01, orientation=None, threshold=1e-3, maxIter=30000, debug=False, verbose=False)
-
-
+pltTime, pltEFPosition = sim.move_with_PD(endEffector, targetPosition[0], speed=0.01, orientation=None, threshold=1e-3, maxIter=30000, debug=False, verbose=False,velocityControl=True)
 # Now plot some graphs
 task1_figure_name = "task2_kinematics.png"
 task1_savefig = True
