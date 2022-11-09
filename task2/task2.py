@@ -32,7 +32,7 @@ pybulletConfigs = {
     "controlFrequency": 1000,
     "updateFrequency": 250,
     "gravity": -9.81,
-    "gravityCompensation": .8,
+    "gravityCompensation": 1.,
     "floor": True,
     "cameraSettings": (1.07, 90.0, -52.8, (0.07, 0.01, 0.76))
 }
@@ -104,9 +104,13 @@ targetPosition = np.array([[0.37066581, 0.23061941, 1.06002551],
 print(0.85+0.267)
 sim.getJointLocationAndOrientation('CHEST_JOINT0')
 
+Orientation = np.array([0.3, 0.0, 1.0])
+#Orientation = None
 
 # Example code. Feel free to modify
-pltTime, pltEFPosition = sim.move_with_PD(endEffector, targetPosition[0], speed=0.01, orientation=None, threshold=1e-3, maxIter=30000, debug=False, verbose=False,velocityControl=True)
+for t in targetPosition:
+    pltTime, pltEFPosition = sim.move_with_PD(endEffector, t, speed=0.01, orientation=Orientation, threshold=1e-3, maxIter=30000, debug=False, verbose=False,velocityControl=True)
+    print("Target position: ", t)
 # Now plot some graphs
 task1_figure_name = "task2_kinematics.png"
 task1_savefig = True

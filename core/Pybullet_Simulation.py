@@ -186,7 +186,7 @@ class Simulation(Simulation_base):
         JointToWorldFrame = homogeneousTransformationMatrices.get(jointName)
         for next_joint in transformationOrder:
             JointToWorldFrame = homogeneousTransformationMatrices.get(next_joint) * JointToWorldFrame
-        return (JointToWorldFrame[0:3, 3]).squeeze(), JointToWorldFrame[0:3, 0:3]
+        return (JointToWorldFrame[0:3, 3]).squeeze(), JointToWorldFrame[:3, :3]
         # Hint: return two numpy arrays, a 3x1 array for the position vector,
         # and a 3x3 array for the rotation matrix
         # return pos, rotmat
@@ -284,9 +284,13 @@ class Simulation(Simulation_base):
         pltDistance = []
         pltTime = np.linspace(0, 1, interSteps)
         targets = np.linspace(self.getJointPosition(endEffector), targetPosition, interSteps)
-        orientations = np.linspace(self.getJointOrientation(endEffector), orientation, interSteps)
-        for i, target in enumerate(targets):
-            x_refs = self.inverseKinematics(endEffector, target, orientations[i], 50, maxIter, threshold)
+        if orientation is not None:
+            orientations = np.linspace(self.getJointOrientation(endEffector), orientation, interSteps)
+        else:
+            orientations = [None] * interSteps
+        for (target, ori) in zip(targets, orientations):
+            print(ori)
+            x_refs = self.inverseKinematics(endEffector, target, ori, 50, maxIter, threshold)
             for joint in x_refs:
                 self.jointTargetPos[joint] = x_refs[joint]
             pltDistance.append(np.linalg.norm(self.getJointPosition(endEffector) - targetPosition))
@@ -426,22 +430,29 @@ class Simulation(Simulation_base):
         pltDistance = []
         iterCounter = 0
         targetPositions = np.linspace(self.getJointPosition(endEffector), targetPosition, 50)
+        print(self.getJointOrientation(endEffector), orientation)
+        if orientation is not None:
+            orientations = np.linspace(self.getJointOrientation(endEffector), orientation, 50)
+            print("with orientation")
+        else:
+            orientations = [None] * 50
+            print("No orientation")
         print("move_with_PD: targetPosition", targetPosition)
-        for target in targetPositions:
-            x_refs = self.inverseKinematics(endEffector, target, orientation, 50, maxIter, threshold)
+        print("orientation ", orientations[0], " -> ",orientation)
+        print("positions ", self.getJointPosition(endEffector), " -> ", targetPosition)
+        print("pos ", [self.getJointPos(j) for j in self.jointRotationAxis])
+        for (target, ori) in zip(targetPositions, orientations):
+            x_refs = self.inverseKinematics(endEffector, target, ori, 50, maxIter, threshold)
+            self.jointTargetPos = {}
+            for joint in x_refs:
+                self.jointTargetPos[joint] = x_refs[joint]
             while iterCounter < maxIter:
-                self.jointTargetPos = {}
-                for joint in x_refs:
-                    self.jointTargetPos[joint] = x_refs[joint]
                 pltDistance.append(np.linalg.norm(self.getJointPosition(endEffector) - targetPosition))
                 self.tick()
-
-                # if np.linalg.norm(self.getJointPosition(endEffector) - targetPosition) < 0.01 or False and abs(
-                #         self.myGetJointVel(endEffector, x_real)) < 5e-7:
                 if np.linalg.norm(self.getJointPosition(endEffector) - target) < 0.01:
-                    # print("reached")
                     break
                 iterCounter += 1
+        print("precisely mathcing target")
         x_refs = self.inverseKinematics(endEffector, targetPosition, orientation, 50, maxIter, threshold)
         while iterCounter < maxIter:
             self.jointTargetPos = {}
@@ -477,7 +488,7 @@ class Simulation(Simulation_base):
 
             # loads your PID gains
             kp = self.ctrlConfig[jointController]['pid']['p']
-            ki = self.ctrlConfig[jointController]['pid']['i']
+            ki = self.ctrlConfig[jointController]['pid']['i'] * 0
             kd = self.ctrlConfig[jointController]['pid']['d']
 
             ### Implement your code from here ... ###

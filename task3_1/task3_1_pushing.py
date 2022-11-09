@@ -92,7 +92,8 @@ def getReadyForTask():
 def solution():
     endEffector = "LARM_JOINT5"
     print(sim.getJointPosition(endEffector))
-    targetOrientation = np.array([1, 0, 1])
+    targetOrientation = np.array([1, 0, 0])
+    #targetOrientation = None
     targetPosition = np.array([0.37, 0.23, 1.06])  # x,y,z coordinates in world frame
     sim.move_with_PD(endEffector, targetPosition, speed=0.01, orientation=targetOrientation, threshold=1e-3, maxIter=30000, debug=False, verbose=False)
     print("Task 3.1 completed")

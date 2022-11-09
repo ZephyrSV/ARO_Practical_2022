@@ -54,7 +54,7 @@ debugLine = True
 
 # TODO: Add your code here to start simulation
 
-ref = [0, 0, 1]
+ref = [1, 0, 0]
 sim = Simulation(pybulletConfigs, robotConfigs, refVect=ref)
 
 # This is an example target position for the left end effector. This target
@@ -62,16 +62,21 @@ sim = Simulation(pybulletConfigs, robotConfigs, refVect=ref)
 # frame is located at the waist, you will need to transform this vector using
 # the base_to_waist translation.
 endEffector = "LARM_JOINT5"
-targetPosition = np.array([0.37, 0.23, 1.06])  # x,y,z coordinates in world frame
-targetOrientation = np.array([1, 0, 1])
+targetPosition = np.array([0.26, 0.03, 0.95])  # x,y,z coordinates in world frame
+targetOrientation = np.array([1, 0.0, 1.0])
+#targetOrientation = None
 print(0.85+0.267)
+print(sim.getJointOrientation(endEffector))
+print(sim.getJointPosition(endEffector))
+print("pos ", [sim.getJointPos(j) for j in sim.jointRotationAxis])
+
 sim.getJointLocationAndOrientation('CHEST_JOINT0')
 
 
 # Example code. Feel free to modify
 pltTime, pltEFPosition = sim.move_without_PD(endEffector, targetPosition, speed=0.01, orientation=targetOrientation, threshold=1e-3, maxIter=3000, debug=False, verbose=False)
 
-
+print(sim.getJointOrientation(endEffector))
 # Now plot some graphs
 task1_figure_name = "task1_kinematics.png"
 task1_savefig = True
