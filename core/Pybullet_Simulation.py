@@ -210,16 +210,19 @@ class Simulation(Simulation_base):
     def jacobianMatrix(self, endEffector):
         """Calculate the Jacobian Matrix for the Nextage Robot."""
         joints = self.jointOrderIK[endEffector]
+        # position
         jacobian = np.cross(self.jointRotationAxis[joints[0]], self.getJointPosition(endEffector) - self.getJointPosition(joints[0]))
-        jacobian = np.hstack([jacobian, np.cross(self.jointRotationAxis[joints[0]], self.jointRotationAxis[endEffector]).reshape((1,3))])
-        jacobian.reshape(1, 6)
+        # orientation
+        #jacobian = np.hstack([jacobian, np.cross(self.jointRotationAxis[joints[0]], self.jointRotationAxis[endEffector]).reshape((1,3))])
+        jacobian = np.hstack([jacobian, self.jointRotationAxis[joints[0]].reshape((1,3))])
         for joint in joints[1:]: # skip the first joint since we already calculated it
             # position
             temp = np.cross(self.jointRotationAxis[joint], self.getJointPosition(endEffector) - self.getJointPosition(joint))
             # orientation
-            temp = np.hstack([temp, np.cross(self.jointRotationAxis[joint], self.jointRotationAxis[endEffector]).reshape((1,3))])
+            # temp = np.hstack([temp, np.cross(self.jointRotationAxis[joint], self.jointRotationAxis[endEffector]).reshape((1,3))])
+            temp = np.hstack([temp, self.jointRotationAxis[joint].reshape((1,3))])
             # temp = temp + np.cross(self.getJointAxis(joint), self.getJointAxis(endEffector))]
-            jacobian = np.append(jacobian, temp, axis=0)
+            jacobian = np.vstack([jacobian, temp])
         return jacobian.T
 
         # You can implement the cross product yourself or use calculateJacobian().
@@ -256,7 +259,7 @@ class Simulation(Simulation_base):
             dy = np.hstack([dy, dori])
         # Calculate delta
         if orientation is None:
-            drad = np.linalg.pinv(jacobian[0:3, :]) @ dy.T
+            drad = np.linalg.pinv(jacobian[:3, :]) @ dy.T
         else:
             drad = np.linalg.pinv(jacobian) @ dy.T
 

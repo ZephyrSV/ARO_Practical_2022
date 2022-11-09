@@ -55,7 +55,7 @@ debugLine = True
 # TODO: Add your code here to start simulation
 
 ref = [1, 0, 0]
-sim = Simulation(pybulletConfigs, robotConfigs, refVect=ref)
+sim = Simulation(pybulletConfigs, robotConfigs)
 
 # This is an example target position for the left end effector. This target
 # position assumes your world frame is located at the base. If your world
@@ -63,7 +63,7 @@ sim = Simulation(pybulletConfigs, robotConfigs, refVect=ref)
 # the base_to_waist translation.
 endEffector = "LARM_JOINT5"
 targetPosition = np.array([0.26, 0.03, 0.95])  # x,y,z coordinates in world frame
-targetOrientation = np.array([1, 0.0, 1.0])
+targetOrientation = np.array([0.9, 0, 0.3])
 #targetOrientation = None
 print(0.85+0.267)
 print(sim.getJointOrientation(endEffector))
