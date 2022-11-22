@@ -93,23 +93,23 @@ class Simulation(Simulation_base):
     jointOrderIK = {
         'base_to_dummy': [], # Virtual joint
         'base_to_waist': [], # Fixed joint
-        'CHEST_JOINT0': ['base_to_waist'],
-        'HEAD_JOINT0': ['CHEST_JOINT0'],
-        'HEAD_JOINT1': ['CHEST_JOINT0', 'HEAD_JOINT0'],
-        'LARM_JOINT0': ['CHEST_JOINT0'],
-        'LARM_JOINT1': ['CHEST_JOINT0', 'LARM_JOINT0'],
-        'LARM_JOINT2': ['CHEST_JOINT0', 'LARM_JOINT0', 'LARM_JOINT1'],
-        'LARM_JOINT3': ['CHEST_JOINT0', 'LARM_JOINT0', 'LARM_JOINT1', 'LARM_JOINT2'],
-        'LARM_JOINT4': ['CHEST_JOINT0', 'LARM_JOINT0', 'LARM_JOINT1', 'LARM_JOINT2', 'LARM_JOINT3'],
-        'LARM_JOINT5': ['CHEST_JOINT0', 'LARM_JOINT0', 'LARM_JOINT1', 'LARM_JOINT2', 'LARM_JOINT3', 'LARM_JOINT4'],
-        #'LARM_JOINT5': ['LARM_JOINT0', 'LARM_JOINT1', 'LARM_JOINT2', 'LARM_JOINT3', 'LARM_JOINT4'],
-        'RARM_JOINT0': ['CHEST_JOINT0'],
-        'RARM_JOINT1': ['CHEST_JOINT0', 'RARM_JOINT0'],
-        'RARM_JOINT2': ['CHEST_JOINT0', 'RARM_JOINT0', 'RARM_JOINT1'],
-        'RARM_JOINT3': ['CHEST_JOINT0', 'RARM_JOINT0', 'RARM_JOINT1', 'RARM_JOINT2'],
-        'RARM_JOINT4': ['CHEST_JOINT0', 'RARM_JOINT0', 'RARM_JOINT1', 'RARM_JOINT2', 'RARM_JOINT3'],
-        'RARM_JOINT5': ['CHEST_JOINT0', 'RARM_JOINT0', 'RARM_JOINT1', 'RARM_JOINT2', 'RARM_JOINT3', 'RARM_JOINT4']
+        'CHEST_JOINT0': ['CHEST_JOINT0'],
+        'HEAD_JOINT0': ['CHEST_JOINT0', 'HEAD_JOINT0'],
+        'HEAD_JOINT1': ['CHEST_JOINT0', 'HEAD_JOINT0', 'HEAD_JOINT1'],
+        'LARM_JOINT0': ['CHEST_JOINT0', 'LARM_JOINT0'],
+        'LARM_JOINT1': ['CHEST_JOINT0', 'LARM_JOINT0', 'LARM_JOINT1'],
+        'LARM_JOINT2': ['CHEST_JOINT0', 'LARM_JOINT0', 'LARM_JOINT1', 'LARM_JOINT2'],
+        'LARM_JOINT3': ['CHEST_JOINT0', 'LARM_JOINT0', 'LARM_JOINT1', 'LARM_JOINT2', 'LARM_JOINT3'],
+        'LARM_JOINT4': ['CHEST_JOINT0', 'LARM_JOINT0', 'LARM_JOINT1', 'LARM_JOINT2', 'LARM_JOINT3', 'LARM_JOINT4'],
+        'LARM_JOINT5': ['CHEST_JOINT0', 'LARM_JOINT0', 'LARM_JOINT1', 'LARM_JOINT2', 'LARM_JOINT3', 'LARM_JOINT4', 'LARM_JOINT5'],
+        'RARM_JOINT0': ['CHEST_JOINT0', 'RARM_JOINT0'],
+        'RARM_JOINT1': ['CHEST_JOINT0', 'RARM_JOINT0', 'RARM_JOINT1'],
+        'RARM_JOINT2': ['CHEST_JOINT0', 'RARM_JOINT0', 'RARM_JOINT1', 'RARM_JOINT2'],
+        'RARM_JOINT3': ['CHEST_JOINT0', 'RARM_JOINT0', 'RARM_JOINT1', 'RARM_JOINT2', 'RARM_JOINT3'],
+        'RARM_JOINT4': ['CHEST_JOINT0', 'RARM_JOINT0', 'RARM_JOINT1', 'RARM_JOINT2', 'RARM_JOINT3', 'RARM_JOINT4'],
+        'RARM_JOINT5': ['CHEST_JOINT0', 'RARM_JOINT0', 'RARM_JOINT1', 'RARM_JOINT2', 'RARM_JOINT3', 'RARM_JOINT4', 'RARM_JOINT5']
     }
+
 
     oldPositions = {}
     errorIntegral = {}
@@ -181,12 +181,11 @@ class Simulation(Simulation_base):
             according to the topology of the Nextage robot.
         """
         # Remember to multiply the transformation matrices following the kinematic chain for each arm.
-        homogeneousTransformationMatrices = self.getTransformationMatrices()
-        transformationOrder = self.jointOrderFK.get(jointName)
-        JointToWorldFrame = homogeneousTransformationMatrices.get(jointName)
-        for next_joint in transformationOrder:
-            JointToWorldFrame = homogeneousTransformationMatrices.get(next_joint) * JointToWorldFrame
-        return (JointToWorldFrame[0:3, 3]).squeeze(), JointToWorldFrame[:3, :3]
+        transformMats = self.getTransformationMatrices()
+        result = transformMats.get(jointName)
+        for next_joint in self.jointOrderFK.get(jointName):
+            result = transformMats.get(next_joint) @ result
+        return (result[0:3, 3]).squeeze(), result[0:3, 0:3]
         # Hint: return two numpy arrays, a 3x1 array for the position vector,
         # and a 3x3 array for the rotation matrix
         # return pos, rotmat
@@ -207,21 +206,23 @@ class Simulation(Simulation_base):
         """Get the orientation of a joint in the world frame, leave this unchanged please."""
         return np.array(self.getJointLocationAndOrientation(jointName)[1] @ self.jointRotationAxis[jointName]).squeeze()
 
+    """Calculate the Jacobian Matrix for the Nextage Robot."""
     def jacobianMatrix(self, endEffector):
-        """Calculate the Jacobian Matrix for the Nextage Robot."""
-        joints = self.jointOrderIK[endEffector]
-        # position
-        jacobian = np.cross(self.jointRotationAxis[joints[0]], self.getJointPosition(endEffector) - self.getJointPosition(joints[0]))
-        # orientation
-        #jacobian = np.hstack([jacobian, np.cross(self.jointRotationAxis[joints[0]], self.jointRotationAxis[endEffector]).reshape((1,3))])
-        jacobian = np.hstack([jacobian, self.jointRotationAxis[joints[0]].reshape((1,3))])
-        for joint in joints[1:]: # skip the first joint since we already calculated it
+        jacobian = np.ndarray((0,6))
+        for joint in self.jointOrderIK[endEffector]:
             # position
-            temp = np.cross(self.jointRotationAxis[joint], self.getJointPosition(endEffector) - self.getJointPosition(joint))
+            temp = np.cross(self.getJointOrientation(joint, ref=self.jointRotationAxis[joint]),
+                            self.getJointPosition(endEffector) - self.getJointPosition(joint))
             # orientation
-            # temp = np.hstack([temp, np.cross(self.jointRotationAxis[joint], self.jointRotationAxis[endEffector]).reshape((1,3))])
-            temp = np.hstack([temp, self.jointRotationAxis[joint].reshape((1,3))])
-            # temp = temp + np.cross(self.getJointAxis(joint), self.getJointAxis(endEffector))]
+            temp = np.hstack([temp,
+                             [np.cross(self.getJointOrientation(joint, ref=self.jointRotationAxis[joint]),
+                                       self.getJointOrientation(endEffector, ref=self.jointRotationAxis[endEffector]))]])
+            # orientation
+            # temp = np.hstack([temp,
+            #                  [np.cross(self.jointRotationAxis[joint],
+            #                            self.jointRotationAxis[endEffector])]])
+
+
             jacobian = np.vstack([jacobian, temp])
         return jacobian.T
 
@@ -235,8 +236,7 @@ class Simulation(Simulation_base):
 
     # Task 1.2 Inverse Kinematics
 
-    def inverseKinematics(self, endEffector, targetPosition, orientation, interpolationSteps, maxIterPerStep,
-                          threshold):
+    def inverseKinematics(self, endEffector, targetPosition, orientation):
         """Your IK solver \\
         Arguments: \\
             endEffector: the jointName the end-effector \\
@@ -255,13 +255,19 @@ class Simulation(Simulation_base):
         # Calculate dy
         dy = targetPosition - curr_pos
         if orientation is not None:
+            print("orientation ", orientation, "endEffectorOrientation ", self.getJointOrientation(endEffector))
             dori = (orientation - self.getJointOrientation(endEffector)).reshape((1, 3))
+            print("dori", dori)
             dy = np.hstack([dy, dori])
+            print("dy", dy)
         # Calculate delta
         if orientation is None:
             drad = np.linalg.pinv(jacobian[:3, :]) @ dy.T
         else:
+            print("jacobian \n", jacobian)
             drad = np.linalg.pinv(jacobian) @ dy.T
+            print("drad", np.array(drad).squeeze(), "\n")
+
 
 
 
@@ -293,7 +299,7 @@ class Simulation(Simulation_base):
             orientations = [None] * interSteps
         for (target, ori) in zip(targets, orientations):
             print(ori)
-            x_refs = self.inverseKinematics(endEffector, target, ori, 50, maxIter, threshold)
+            x_refs = self.inverseKinematics(endEffector, target, ori)
             for joint in x_refs:
                 self.jointTargetPos[joint] = x_refs[joint]
             pltDistance.append(np.linalg.norm(self.getJointPosition(endEffector) - targetPosition))
@@ -445,7 +451,7 @@ class Simulation(Simulation_base):
         print("positions ", self.getJointPosition(endEffector), " -> ", targetPosition)
         print("pos ", [self.getJointPos(j) for j in self.jointRotationAxis])
         for (target, ori) in zip(targetPositions, orientations):
-            x_refs = self.inverseKinematics(endEffector, target, ori, 50, maxIter, threshold)
+            x_refs = self.inverseKinematics(endEffector, target, ori)
             self.jointTargetPos = {}
             for joint in x_refs:
                 self.jointTargetPos[joint] = x_refs[joint]
@@ -456,7 +462,7 @@ class Simulation(Simulation_base):
                     break
                 iterCounter += 1
         print("precisely mathcing target")
-        x_refs = self.inverseKinematics(endEffector, targetPosition, orientation, 50, maxIter, threshold)
+        x_refs = self.inverseKinematics(endEffector, targetPosition, orientation)
         while iterCounter < maxIter:
             self.jointTargetPos = {}
             for joint in x_refs:
@@ -481,8 +487,14 @@ class Simulation(Simulation_base):
         x_real = self.getJointPoses(self.joints)
         if (not self.oldPositions):  # check if oldPositions is empty
             self.oldPositions = x_real
-        for joint in self.jointTargetPos:
+        # for joint in self.jointTargetPos.keys():
+        for joint in self.jointRotationAxis.keys():
+
             # skip dummy joints (world to base joint)
+            if joint == 'base_to_dummy':
+                continue
+            if joint == 'base_to_waist':
+                continue
             jointController = self.jointControllers[joint]
             if jointController == 'SKIP_THIS_JOINT':
                 continue
@@ -491,11 +503,11 @@ class Simulation(Simulation_base):
 
             # loads your PID gains
             kp = self.ctrlConfig[jointController]['pid']['p']
-            ki = self.ctrlConfig[jointController]['pid']['i'] * 0
+            ki = self.ctrlConfig[jointController]['pid']['i']
             kd = self.ctrlConfig[jointController]['pid']['d']
 
             ### Implement your code from here ... ###
-            x_ref = self.jointTargetPos[joint]
+            x_ref = self.jointTargetPos.get(joint, self.getJointPos(joint))
             dx_ref = self.jointTargetVels.get(joint, 0)
             dx_real = self.myGetJointVel(joint, x_real)
             self.errorIntegral[joint] = self.errorIntegral.get(joint, 0) + (x_ref - x_real[joint]) * self.dt
