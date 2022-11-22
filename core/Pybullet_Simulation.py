@@ -255,8 +255,8 @@ class Simulation(Simulation_base):
         # Calculate dy
         dy = targetPosition - curr_pos
         if orientation is not None:
-            print("orientation ", orientation, "endEffectorOrientation ", self.getJointOrientation(endEffector))
-            dori = (orientation - self.getJointOrientation(endEffector)).reshape((1, 3))
+            print("orientation ", orientation, "endEffectorOrientation ", self.getJointOrientation(endEffector, ref=self.jointRotationAxis[endEffector]))
+            dori = (orientation - self.getJointOrientation(endEffector, ref=self.jointRotationAxis[endEffector])).reshape((1, 3))
             print("dori", dori)
             dy = np.hstack([dy, dori])
             print("dy", dy)
@@ -294,7 +294,7 @@ class Simulation(Simulation_base):
         pltTime = np.linspace(0, 1, interSteps)
         targets = np.linspace(self.getJointPosition(endEffector), targetPosition, interSteps)
         if orientation is not None:
-            orientations = np.linspace(self.getJointOrientation(endEffector), orientation, interSteps)
+            orientations = np.linspace(self.getJointOrientation(endEffector, ref=self.jointRotationAxis[endEffector]), orientation, interSteps)
         else:
             orientations = [None] * interSteps
         for (target, ori) in zip(targets, orientations):
