@@ -64,14 +64,15 @@ sim = Simulation(pybulletConfigs, robotConfigs)
 endEffector = "LARM_JOINT5"
 #targetPosition = np.array([0.26, 0.03, 0.95])  # x,y,z coordinates in world frame
 targetPosition = np.array([0.37, 0.23, 1.06])  # x,y,z coordinates in world frame
+targetPosition = np.array([0.16, 0., 0.95])  # x,y,z coordinates in world frame
 # targetPosition = np.array([0.26, -0.23, 0.95])  # x,y,z coordinates in world frame
-targetOrientation = np.array([1., 0, 0.0])
-targetOrientation = np.array([0., 1, 1])
+targetOrientation = np.array([1., 1, 1.0])
+# targetOrientation = np.array([0., 1, 1])
 # targetOrientation = np.array([0., -1., 0.0])
 # targetOrientation = None
 print(0.85+0.267)
 np.set_printoptions(formatter={'float': lambda x: "{0:0.3f}".format(x)})
-print(sim.getJointOrientation(endEffector))
+print(sim.getJointOrientation(endEffector, ref=sim.jointRotationAxis[endEffector]))
 print(sim.getJointPosition(endEffector))
 print("pos ", [sim.getJointPos(j) for j in sim.jointRotationAxis])
 
@@ -81,7 +82,7 @@ sim.getJointLocationAndOrientation('CHEST_JOINT0')
 # Example code. Feel free to modify
 pltTime, pltEFPosition = sim.move_without_PD(endEffector, targetPosition, speed=0.01, orientation=targetOrientation, threshold=1e-3, maxIter=3000, debug=False, verbose=False)
 
-print(sim.getJointOrientation(endEffector))
+print(sim.getJointOrientation(endEffector, ref=sim.jointRotationAxis[endEffector]))
 # Now plot some graphs
 task1_figure_name = "task1_kinematics.png"
 task1_savefig = True

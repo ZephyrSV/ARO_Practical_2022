@@ -104,8 +104,8 @@ targetPosition = np.array([[0.37066581, 0.23061941, 1.06002551],
 print(0.85+0.267)
 sim.getJointLocationAndOrientation('CHEST_JOINT0')
 
-Orientation = np.array([0.3, 0.0, 1.0])
-#Orientation = None
+Orientation = np.array([0.3, 0.3, 0.3])
+# Orientation = None
 
 # Example code. Feel free to modify
 for t in targetPosition:

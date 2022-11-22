@@ -217,12 +217,6 @@ class Simulation(Simulation_base):
             temp = np.hstack([temp,
                              [np.cross(self.getJointOrientation(joint, ref=self.jointRotationAxis[joint]),
                                        self.getJointOrientation(endEffector, ref=self.jointRotationAxis[endEffector]))]])
-            # orientation
-            # temp = np.hstack([temp,
-            #                  [np.cross(self.jointRotationAxis[joint],
-            #                            self.jointRotationAxis[endEffector])]])
-
-
             jacobian = np.vstack([jacobian, temp])
         return jacobian.T
 
@@ -255,18 +249,13 @@ class Simulation(Simulation_base):
         # Calculate dy
         dy = targetPosition - curr_pos
         if orientation is not None:
-            print("orientation ", orientation, "endEffectorOrientation ", self.getJointOrientation(endEffector, ref=self.jointRotationAxis[endEffector]))
             dori = (orientation - self.getJointOrientation(endEffector, ref=self.jointRotationAxis[endEffector])).reshape((1, 3))
-            print("dori", dori)
             dy = np.hstack([dy, dori])
-            print("dy", dy)
         # Calculate delta
         if orientation is None:
             drad = np.linalg.pinv(jacobian[:3, :]) @ dy.T
         else:
-            print("jacobian \n", jacobian)
             drad = np.linalg.pinv(jacobian) @ dy.T
-            print("drad", np.array(drad).squeeze(), "\n")
 
 
 
@@ -298,7 +287,6 @@ class Simulation(Simulation_base):
         else:
             orientations = [None] * interSteps
         for (target, ori) in zip(targets, orientations):
-            print(ori)
             x_refs = self.inverseKinematics(endEffector, target, ori)
             for joint in x_refs:
                 self.jointTargetPos[joint] = x_refs[joint]
@@ -439,13 +427,11 @@ class Simulation(Simulation_base):
         pltDistance = []
         iterCounter = 0
         targetPositions = np.linspace(self.getJointPosition(endEffector), targetPosition, 50)
-        print(self.getJointOrientation(endEffector), orientation)
+        print(self.getJointOrientation(endEffector, ref=self.jointRotationAxis[endEffector]), orientation)
         if orientation is not None:
-            orientations = np.linspace(self.getJointOrientation(endEffector), orientation, 50)
-            print("with orientation")
+            orientations = np.linspace(self.getJointOrientation(endEffector, ref=self.jointRotationAxis[endEffector]), orientation, 50)
         else:
             orientations = [None] * 50
-            print("No orientation")
         print("move_with_PD: targetPosition", targetPosition)
         print("orientation ", orientations[0], " -> ",orientation)
         print("positions ", self.getJointPosition(endEffector), " -> ", targetPosition)

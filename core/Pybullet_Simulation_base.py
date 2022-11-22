@@ -215,7 +215,7 @@ class Simulation_base:
             'LARM_JOINT2': "darkOrange",
             'LARM_JOINT3': "lightOrange",
             'LARM_JOINT4': "darkOrange",
-            'LARM_JOINT5': "lightOrange",
+            'LARM_JOINT5': "red",
             'RARM_JOINT0': "darkOrange",
             'RARM_JOINT1': "lightOrange",
             'RARM_JOINT2': "darkOrange",
