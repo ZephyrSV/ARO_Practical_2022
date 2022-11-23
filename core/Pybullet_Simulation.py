@@ -275,18 +275,13 @@ class Simulation(Simulation_base):
                 ref = np.array([1, 0, 0])
             eeref = self.getJointOrientation(endEffector, ref=ref)
 
+
             proj = direction - np.dot(direction, normal) * normal
             proj = proj / np.linalg.norm(proj)
-            print("proj", proj)
-            print(ref)
-            print("eeref", eeref)
 
             angle = np.arctan2(np.dot(np.cross(eeref, proj), normal), np.dot(eeref, proj))
             # angle = np.arccos(np.dot(proj, self.getJointOrientation(endEffector, ref=ref)))
             curr_q[endEffector] += angle
-            if np.dot(np.cross(proj, ref), normal) < 0:
-                angle = -angle
-            curr_q[endEffector] = self.getJointPos(endEffector) + angle
 
             # print("drad endEffector: ", drad[len(self.jointOrderIK[endEffector])-1])
         return curr_q
@@ -464,10 +459,6 @@ class Simulation(Simulation_base):
             orientations = np.linspace(self.getJointOrientation(endEffector, ref=self.jointRotationAxis[endEffector]), orientation, 50)
         else:
             orientations = [None] * interSteps
-        print("move_with_PD: targetPosition", targetPosition)
-        print("orientation ", orientations[0], " -> ",orientation)
-        print("positions ", self.getJointPosition(endEffector), " -> ", targetPosition)
-        print("pos ", [self.getJointPos(j) for j in self.jointRotationAxis])
         if direction is not None:
             ref = np.array([0, 0, 1])
             if np.dot(ref, self.jointRotationAxis[endEffector]) > 0.9:
