@@ -92,7 +92,7 @@ def getReadyForTask():
 def solution():
     endEffector = "LARM_JOINT5"
     print(sim.getJointPosition(endEffector))
-    targetOrientation = np.array([1, 1, 1])
+    targetOrientation = np.array([0, 0, 1])
     # targetOrientation = None
     targetPosition = np.array([0.37, 0.23, 1.06])  # x,y,z coordinates in world frame
     # sim.move_with_PD(endEffector, targetPosition, speed=0.01, orientation=targetOrientation, threshold=1e-3, maxIter=30000, debug=False, verbose=False)
@@ -108,10 +108,10 @@ def solution():
                         [0.41, 0., 1.06],
                         [0.16, 0., 1.06],
                         [0.16, 0., 0.95],
-                        [0.56, 0., 0.95]])
-    print(targets)
+                        [0.57, 0., 0.95]])
+    targetDirection = np.array([1., 0, 0.0])
     for target in targets:
-        sim.move_with_PD("LARM_JOINT5", target, orientation=targetOrientation)
+        sim.move_without_PD("LARM_JOINT5", target, orientation=targetOrientation, direction=targetDirection)
         print("ARM POS ", sim.getJointPosition("LARM_JOINT5"))
 
     pass

@@ -230,7 +230,7 @@ class Simulation(Simulation_base):
 
     # Task 1.2 Inverse Kinematics
 
-    def inverseKinematics(self, endEffector, targetPosition, orientation):
+    def inverseKinematics(self, endEffector, targetPosition, orientation, direction=None):
         """Your IK solver \\
         Arguments: \\
             endEffector: the jointName the end-effector \\
@@ -257,19 +257,44 @@ class Simulation(Simulation_base):
         else:
             drad = np.linalg.pinv(jacobian) @ dy.T
 
-
-
-
         curr_q = {}
         for j, joint in enumerate(self.jointOrderIK[endEffector]):
             curr_q[joint] = self.getJointPos(joint) + drad[j,0]
 
+        if direction is not None:
+            #we project the direction onto the plane perpendicular to the orientation
+            #and then we calculate the angle between the projected direction and the current orientation
+            #we then add this angle to the current joint angle
+            #this is a hacky way to make the robot move in a direction
+            #but it works
+            # choose a reference vector that is not parallel to the rotation axis of the end effector
+            normal = self.getJointOrientation(endEffector, ref=self.jointRotationAxis[endEffector])
+
+            ref = np.array([0, 0, 1])
+            if np.dot(ref, self.jointRotationAxis[endEffector]) > 0.9:
+                ref = np.array([1, 0, 0])
+            eeref = self.getJointOrientation(endEffector, ref=ref)
+
+            proj = direction - np.dot(direction, normal) * normal
+            proj = proj / np.linalg.norm(proj)
+            print("proj", proj)
+            print(ref)
+            print("eeref", eeref)
+
+            angle = np.arctan2(np.dot(np.cross(eeref, proj), normal), np.dot(eeref, proj))
+            # angle = np.arccos(np.dot(proj, self.getJointOrientation(endEffector, ref=ref)))
+            curr_q[endEffector] += angle
+            if np.dot(np.cross(proj, ref), normal) < 0:
+                angle = -angle
+            curr_q[endEffector] = self.getJointPos(endEffector) + angle
+
+            # print("drad endEffector: ", drad[len(self.jointOrderIK[endEffector])-1])
         return curr_q
         # Hint: return a numpy array which includes the reference angular
         # positions for all joints after performing inverse kinematics.
         pass
 
-    def move_without_PD(self, endEffector, targetPosition, speed=0.01, orientation=None,
+    def move_without_PD(self, endEffector, targetPosition, speed=0.01, orientation=None, direction=None,
                         threshold=1e-3, maxIter=3000, debug=False, verbose=False):
         """
         Move joints using Inverse Kinematics solver (without using PD control).
@@ -286,8 +311,15 @@ class Simulation(Simulation_base):
             orientations = np.linspace(self.getJointOrientation(endEffector, ref=self.jointRotationAxis[endEffector]), orientation, interSteps)
         else:
             orientations = [None] * interSteps
-        for (target, ori) in zip(targets, orientations):
-            x_refs = self.inverseKinematics(endEffector, target, ori)
+        if direction is not None:
+            ref = np.array([0, 0, 1])
+            if np.dot(ref, self.jointRotationAxis[endEffector]) > 0.9:
+                ref = np.array([1, 0, 0])
+            directions = np.linspace(self.getJointOrientation(endEffector, ref=ref), direction, interSteps)
+        else:
+            directions = [None] * interSteps
+        for (target, ori, direc) in zip(targets, orientations, directions):
+            x_refs = self.inverseKinematics(endEffector, target, ori, direction=direc)
             for joint in x_refs:
                 self.jointTargetPos[joint] = x_refs[joint]
             pltDistance.append(np.linalg.norm(self.getJointPosition(endEffector) - targetPosition))
@@ -405,7 +437,7 @@ class Simulation(Simulation_base):
         pltTorqueTime = pltTime
         return pltTime, pltTarget, pltTorque, pltTorqueTime, pltPosition, pltVelocity
 
-    def move_with_PD(self, endEffector, targetPosition, speed=0.01, orientation=None,
+    def move_with_PD(self, endEffector, targetPosition, speed=0.01, orientation=None, direction=None,
                      threshold=1e-3, maxIter=3000, debug=False, verbose=False, velocityControl=False):
         """
         Move joints using inverse kinematics solver and using PD control.
@@ -423,7 +455,7 @@ class Simulation(Simulation_base):
         # all IK iterations (optional).
 
         # return pltTime, pltDistance
-
+        interSteps = 50
         pltDistance = []
         iterCounter = 0
         targetPositions = np.linspace(self.getJointPosition(endEffector), targetPosition, 50)
@@ -431,13 +463,20 @@ class Simulation(Simulation_base):
         if orientation is not None:
             orientations = np.linspace(self.getJointOrientation(endEffector, ref=self.jointRotationAxis[endEffector]), orientation, 50)
         else:
-            orientations = [None] * 50
+            orientations = [None] * interSteps
         print("move_with_PD: targetPosition", targetPosition)
         print("orientation ", orientations[0], " -> ",orientation)
         print("positions ", self.getJointPosition(endEffector), " -> ", targetPosition)
         print("pos ", [self.getJointPos(j) for j in self.jointRotationAxis])
-        for (target, ori) in zip(targetPositions, orientations):
-            x_refs = self.inverseKinematics(endEffector, target, ori)
+        if direction is not None:
+            ref = np.array([0, 0, 1])
+            if np.dot(ref, self.jointRotationAxis[endEffector]) > 0.9:
+                ref = np.array([1, 0, 0])
+            directions = np.linspace(self.getJointOrientation(endEffector, ref=ref), direction, interSteps)
+        else:
+            directions = [None] * interSteps
+        for (target, ori, direc) in zip(targetPositions, orientations, directions):
+            x_refs = self.inverseKinematics(endEffector, target, ori, direction=direc)
             self.jointTargetPos = {}
             for joint in x_refs:
                 self.jointTargetPos[joint] = x_refs[joint]
