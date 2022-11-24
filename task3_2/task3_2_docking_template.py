@@ -100,24 +100,35 @@ def getReadyForTask():
 
 
 def solution():
+    flipY = np.array([[1,0,0],[0,-1,0],[0,0,1]])
     endEffectors = ('LARM_JOINT5', 'RARM_JOINT5')
-    lTargets = np.array([[0.41, 0.23, 1.06], # 0 turn without getting caught by the obstacle
+    targets = np.array([[0.41, 0.23, 1.06], # 0 turn without getting caught by the obstacle
                          [0.47, 0.23, 1.04], # 1 lower arms to the dumbbell
-                         [0.47, 0., 1.04], # 2 grab dumbbell
-                         [0.47, 0., 2.34], # 3 lift dumbbell
-                         [0.16, 0., 2.34],
-                         [0.56, 0.01, 0.95]])
-    rTargets = np.array([[0.41, -0.23, 1.06],
-                            [0.47, -0.23, 1.04],
-                            [0.47, 0., 1.04],
-                            [0.47, 0., 2.34],
-                            [0.16, 0., 2.34],
-                            [0.56, 0.01, 0.95]])
+                         [0.47, 0.09, 1.04], # 2 grab dumbbell
+                         [0.47, 0.09, 1.34]]) # 3 lift dumbbell
     orientation = ([0,1,0], [0,-1,0])
-    for i in range(len(lTargets)):
-        print("Moving to target", i)
-        sim.move_2_EE_with_PD(endEffectors, (lTargets[i], rTargets[i]), orientation)
 
+    for (i,t) in enumerate(targets):
+        print("Moving to target", i)
+        sim.move_2_EE_with_PD(endEffectors, (t, flipY @ t), orientation)
+
+    chestPos = 0.84
+    rotMat = sim.getJointRotationalMatrix('CHEST_JOINT0', chestPos)
+    sim.jointTargetPos['CHEST_JOINT0'] = chestPos
+    for _ in range(1000):
+        sim.tick()
+    # the torso should be correctly orientated now
+
+    orientation = [rotMat @ np.array([0,1,0]), rotMat @ np.array([0,-1,0])]
+    targets = np.array([[0.5, 0.09, 1.04],  # 0 lower dumbbell
+                        [0.5, 0.11, 1.04],  # 1 release dumbbell
+                        [0.20, 0.11, 1.04],  # 2 arms back to chest
+                        [0.20, 0.23, 1.34]])  # 3 arms above dumbbell
+
+    print("Rotational matrix of torso:", rotMat)
+    for (i,t) in enumerate(targets):
+        print("Moving to target", i)
+        sim.move_2_EE_with_PD(endEffectors, (rotMat@ t, rotMat @ flipY @ t), orientation)
 
     pass
 

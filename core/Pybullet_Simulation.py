@@ -526,46 +526,30 @@ class Simulation(Simulation_base):
         i1, i2 = 0, 0
         xref1 = self.inverseKinematics(joint1, lTP1[0], lTO1[0])
         xref2 = self.inverseKinematics(joint2, lTP2[0], lTO2[0])
+        for joint in xref1:
+            self.jointTargetPos[joint] = xref1[joint]
+        for joint in xref2:
+            self.jointTargetPos[joint] = xref2[joint]
         # for every joint, move to the target position
         while i1 < interSteps or i2 < interSteps:
             if i1 < interSteps and np.linalg.norm(self.getJointPosition(joint1) - lTP1[i1]) < 0.01:
                 i1 += 1
                 if i1 < interSteps:
                     xref1 = self.inverseKinematics(joint1, lTP1[i1], lTO1[i1])
+                    for joint in xref1:
+                        self.jointTargetPos[joint] = xref1[joint]
             if i2 < interSteps and np.linalg.norm(self.getJointPosition(joint2) - lTP2[i2]) < 0.01:
                 i2 += 1
                 if i2 < interSteps:
                     xref2 = self.inverseKinematics(joint2, lTP2[i2], lTO2[i2])
+                    for joint in xref2:
+                        self.jointTargetPos[joint] = xref2[joint]
 
-            for joint in xref1:
-                self.jointTargetPos[joint] = xref1[joint]
-            for joint in xref2:
-                self.jointTargetPos[joint] = xref2[joint]
+
             tick()
             iterCounter += 1
             if iterCounter > maxIter:
                 break
-
-        print("precisely matching target")
-        reached = [False, False]
-        xref1 = self.inverseKinematics(joint1, tP1, tO1)
-        xref2 = self.inverseKinematics(joint2, tP2, tO2)
-        while not all(reached):
-            if iterCounter > maxIter:
-                break
-            if np.linalg.norm(self.getJointPosition(joint1) - tP1) < 0.005:
-                reached[0] = True
-            if np.linalg.norm(self.getJointPosition(joint2) - tP2) < 0.005:
-                reached[1] = True
-            if not reached[0]:
-                for joint in xref1:
-                    self.jointTargetPos[joint] = xref1[joint]
-            if not reached[1]:
-                for joint in xref2:
-                    self.jointTargetPos[joint] = xref2[joint]
-            tick()
-            iterCounter += 1
-        print("reached : ", all(reached))
 
 
     def tick(self):
