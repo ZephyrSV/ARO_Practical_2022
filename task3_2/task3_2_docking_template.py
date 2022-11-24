@@ -40,7 +40,7 @@ robotConfigs = {
     "robotPIDConfigs": core_path + "/PD_gains.yaml",
     "robotStartPos": [0, 0, 0.85],
     "robotStartOrientation": [0, 0, 0, 1],
-    "fixedBase": False,
+    "fixedBase": True,
     "colored": False
 }
 
@@ -100,8 +100,27 @@ def getReadyForTask():
 
 
 def solution():
-    # TODO: Add your code here
+    endEffectors = ('LARM_JOINT5', 'RARM_JOINT5')
+    lTargets = np.array([[0.41, 0.23, 1.06], # 0 turn without getting caught by the obstacle
+                         [0.47, 0.23, 1.04], # 1 lower arms to the dumbbell
+                         [0.47, 0., 1.04], # 2 grab dumbbell
+                         [0.47, 0., 2.34], # 3 lift dumbbell
+                         [0.16, 0., 2.34],
+                         [0.56, 0.01, 0.95]])
+    rTargets = np.array([[0.41, -0.23, 1.06],
+                            [0.47, -0.23, 1.04],
+                            [0.47, 0., 1.04],
+                            [0.47, 0., 2.34],
+                            [0.16, 0., 2.34],
+                            [0.56, 0.01, 0.95]])
+    orientation = ([0,1,0], [0,-1,0])
+    for i in range(len(lTargets)):
+        print("Moving to target", i)
+        sim.move_2_EE_with_PD(endEffectors, (lTargets[i], rTargets[i]), orientation)
+
+
     pass
 
 tableId, cubeId, targetId = getReadyForTask()
 solution()
+input("Press Enter to exit...")

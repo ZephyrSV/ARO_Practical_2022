@@ -90,14 +90,13 @@ def getReadyForTask():
 
 
 def solution():
-    endEffector = "LARM_JOINT5"
     targetOrientation = np.array([0, 0, 1])
+    targetDirection = np.array([1, 0, 0])
     targets = np.array([[0.41, 0.23, 1.06],
                         [0.41, 0., 1.06],
                         [0.16, 0., 1.06],
                         [0.16, 0., 0.95],
-                        [0.585, -0.01, 0.95]])
-    targetDirection = np.array([1., 0, 0.0])
+                        [0.56, 0.01, 0.95]])
 
     for target in targets:
         sim.move_with_PD("LARM_JOINT5", target, orientation=targetOrientation, direction=targetDirection)
@@ -106,4 +105,5 @@ def solution():
 
 tableId, cubeId, targetId = getReadyForTask()
 solution()
+# print(sim.p.)
 input('Press enter to exit')
