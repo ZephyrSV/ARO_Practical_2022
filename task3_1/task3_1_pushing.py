@@ -96,7 +96,7 @@ def solution():
                         [0.41, 0., 1.06],
                         [0.16, 0., 1.06],
                         [0.16, 0., 0.95],
-                        [0.56, 0.01, 0.95]])
+                        [0.558, 0.0048, 0.95]])
 
     for target in targets:
         sim.move_with_PD("LARM_JOINT5", target, orientation=targetOrientation, direction=targetDirection)
