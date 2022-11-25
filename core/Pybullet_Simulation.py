@@ -618,10 +618,12 @@ class Simulation(Simulation_base):
         cubic spline defined by the control points,
         sampled nTimes along the curve.
         """
+        ################## UNUSED ###################################
         t = np.arange(len(points))
         newx = np.linspace(0, len(points) - 1, nTimes)
 
         return newx, CubicSpline(t, points, bc_type='natural')(newx)
+        ################## UNUSED ###################################
         # Return 'nTimes' points per dimension in 'points' (typically a 2xN array),
         # sampled from a cubic spline defined by 'points' and a boundary condition.
         # You may use methods found in scipy.interpolate
@@ -630,14 +632,14 @@ class Simulation(Simulation_base):
     def dockingToPosition(self, leftTargetAngle, rightTargetAngle, angularSpeed=0.005,
                           threshold=1e-1, maxIter=300, verbose=False):
         """A template function for you, you are free to use anything else"""
-        # TODO: Append your code here
+        # THIS WAS NOT USED SINCE WE USE THE TASK3_1 FILE TO IMPLEMENT THE PUSHING TASK
         pass
 
     # Task 3.2 Grasping & Docking
 
     def clamp(self, leftTargetAngle, rightTargetAngle, angularSpeed=0.005, threshold=1e-1, maxIter=300, verbose=False):
         """A template function for you, you are free to use anything else"""
-        # TODO: Append your code here
+        # THIS WAS NOT USED SINCE WE USE THE TASK3_2 FILE TO IMPLEMENT THE CLAMPING TASK
         pass
 
 ### END

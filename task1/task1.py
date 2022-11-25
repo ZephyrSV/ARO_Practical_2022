@@ -62,19 +62,9 @@ sim = Simulation(pybulletConfigs, robotConfigs)
 # frame is located at the waist, you will need to transform this vector using
 # the base_to_waist translation.
 endEffector = "LARM_JOINT5"
-#targetPosition = np.array([0.26, 0.03, 0.95])  # x,y,z coordinates in world frame
 targetPosition = np.array([0.37, 0.23, 1.06])  # x,y,z coordinates in world frame
-# targetPosition = np.array([0.26, -0.23, 0.95])  # x,y,z coordinates in world frame
 targetOrientation = np.array([0., 0, 1.0])
 targetDirection = np.array([1., 0, 0.0])
-# targetOrientation = np.array([0., 1, 1])
-# targetOrientation = np.array([0., -1., 0.0])
-# targetOrientation = None
-print(0.85+0.267)
-np.set_printoptions(formatter={'float': lambda x: "{0:0.3f}".format(x)})
-print(sim.getJointOrientation(endEffector, ref=sim.jointRotationAxis[endEffector]))
-print(sim.getJointPosition(endEffector))
-print("pos ", [sim.getJointPos(j) for j in sim.jointRotationAxis])
 
 sim.getJointLocationAndOrientation('CHEST_JOINT0')
 
@@ -90,6 +80,7 @@ task1_savefig = True
 
 fig = plt.figure(figsize=(6, 4))
 
+print("endPos ", pltEFPosition[-1])
 plt.plot(pltTime, pltEFPosition, color='blue')
 plt.xlabel("Time s")
 plt.ylabel("Distance to target position")
@@ -97,6 +88,7 @@ plt.ylabel("Distance to target position")
 plt.suptitle("task1 IK without PD", size=16)
 plt.tight_layout()
 plt.subplots_adjust(left=0.15)
+
 
 if task1_savefig:
     fig.savefig(task1_figure_name)
