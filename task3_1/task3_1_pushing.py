@@ -105,5 +105,4 @@ def solution():
 
 tableId, cubeId, targetId = getReadyForTask()
 solution()
-# print(sim.p.)
 input('Press enter to exit')

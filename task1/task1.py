@@ -52,8 +52,6 @@ verbose = False
 debugLine = True
 
 
-# TODO: Add your code here to start simulation
-
 ref = [1, 0, 0]
 sim = Simulation(pybulletConfigs, robotConfigs)
 
