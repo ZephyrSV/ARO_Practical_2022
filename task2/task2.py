@@ -60,6 +60,7 @@ pltTime, pltTarget, pltTorque, pltTorqueTime, pltPosition, pltVelocity = \
     sim.moveJoint(
         task2_jointName, task2_targetPosition, task2_targetVelocity, verbose)
 
+# we print the final error for the report
 print("final position error (in rads): ", pltPosition[-1]- task2_targetPosition)
 # modify the code in below if needed
 fig = plt.figure(figsize=(6, 8))
@@ -86,47 +87,3 @@ plt.subplots_adjust(left=0.15)
 if task2_savefig:
     fig.savefig(task2_figure_name)
 plt.show()
-"""
-
-
-endEffector = "LARM_JOINT5"
-# targetPosition = np.array([0.37, 0.23, 1.06])  # x,y,z coordinates in world frame
-targetPosition = np.array([[0.37066581, 0.23061941, 1.06002551],
-                           [0.37044753, 0.1375494,  1.06001715],
-                           [0.37025116, 0.08729813, 1.06000962],
-                           [0.37009864, 0.12268436, 1.06000378],
-                           [0.37001187, 0.28652682, 1.06000045],
-                           [0.37001187, 0.61986015, 1.06000045],
-                           [0.37009864, 1.12268436, 1.06000378],
-                           [0.37025116, 1.7539648 , 1.06000962],
-                           [0.37044753, 2.47088273, 1.06001715],
-                           [0.37066581, 3.23061941, 1.06002551]])
-print(0.85+0.267)
-sim.getJointLocationAndOrientation('CHEST_JOINT0')
-
-Orientation = np.array([0.3, 0.3, 0.3])
-# Orientation = None
-
-# Example code. Feel free to modify
-for t in targetPosition:
-    pltTime, pltEFPosition = sim.move_with_PD(endEffector, t, speed=0.01, orientation=Orientation, threshold=1e-3, maxIter=30000, debug=False, verbose=False,velocityControl=True)
-    print("Target position: ", t)
-# Now plot some graphs
-task1_figure_name = "task2_kinematics.png"
-task1_savefig = True
-# ...
-
-fig = plt.figure(figsize=(6, 4))
-
-plt.plot(pltTime, pltEFPosition, color='blue')
-plt.xlabel("Time s")
-plt.ylabel("Distance to target position")
-
-plt.suptitle("task2 IK WITH PD", size=16)
-plt.tight_layout()
-plt.subplots_adjust(left=0.15)
-
-if task1_savefig:
-    fig.savefig(task1_figure_name)
-plt.show()
-# """
